@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── NextAuth models ─────────────────────────────────────────────────────────
+
+model User {
+  id            String          @id @default(cuid())
+  name          String?
+  email         String          @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  accounts      Account[]
+  sessions      Session[]
+  ingredients   Ingredient[]
+  blends        Blend[]
+  recipes       Recipe[]
+  favorites     FavoriteBlend[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Application models ──────────────────────────────────────────────────────
+
+enum IngredientCategory {
+  TEA
+  HERB
+  SPICE
+  FRUIT
+  FLOWER
+  OTHER
+}
+
+model Ingredient {
+  id           String             @id @default(cuid())
+  name         String
+  description  String?
+  category     IngredientCategory
+  origin       String?
+  flavorNotes  Json     @default("[]")
+  quantity     Float              @default(0)
+  unit         String             @default("g")
+  pricePerUnit Float?
+  imageUrl     String?
+  userId       String
+  user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blendItems   BlendIngredient[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([category])
+  @@index([name])
+}
+
+model Blend {
+  id          String            @id @default(cuid())
+  name        String
+  description String?
+  brewTemp    Int?
+  brewTime    Int?
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredients BlendIngredient[]
+  recipes     Recipe[]
+  favorites   FavoriteBlend[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([userId])
+}
+
+model BlendIngredient {
+  id           String     @id @default(cuid())
+  blendId      String
+  blend        Blend      @relation(fields: [blendId], references: [id], onDelete: Cascade)
+  ingredientId String
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id], onDelete: Cascade)
+  amount       Float
+  unit         String     @default("g")
+  order        Int        @default(0)
+
+  @@unique([blendId, ingredientId])
+  @@index([blendId])
+}
+
+model Recipe {
+  id         String    @id @default(cuid())
+  name       String
+  notes      String?
+  rating     Int?
+  brewCount  Int       @default(0)
+  lastBrewed DateTime?
+  blendId    String
+  blend      Blend     @relation(fields: [blendId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([blendId])
+}
+
+model FavoriteBlend {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blendId   String
+  blend     Blend    @relation(fields: [blendId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, blendId])
+  @@index([userId])
+}
