@@ -17,6 +17,10 @@ export type RecipeWithBlend = Recipe & {
   blend: BlendWithIngredients;
 };
 
+export type SharedRecipe = RecipeWithBlend & {
+  user: { socialHandle: string | null; name: string | null };
+};
+
 export type FavoriteWithBlend = FavoriteBlend & {
   blend: BlendWithIngredients;
 };

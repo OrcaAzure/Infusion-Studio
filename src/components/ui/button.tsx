@@ -43,6 +43,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, isLoading, children, disabled, ...props }, ref) => (
     <button
       className={cn(buttonVariants({ variant, size, className }))}
+      data-glow-color={variant === "default" ? "#059669" : variant === "destructive" ? "#dc2626" : undefined}
       ref={ref}
       disabled={disabled || isLoading}
       {...props}

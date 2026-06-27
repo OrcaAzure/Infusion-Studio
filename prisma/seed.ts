@@ -9,11 +9,12 @@ async function main() {
 
   const user = await prisma.user.upsert({
     where: { email: "trial@trial.com" },
-    update: { password: trialPassword },
+    update: { password: trialPassword, socialHandle: "oven_infusion" },
     create: {
       name: "Trial User",
       email: "trial@trial.com",
       password: trialPassword,
+      socialHandle: "oven_infusion",
     },
   });
 
@@ -138,14 +139,43 @@ async function main() {
 
   await prisma.recipe.upsert({
     where: { id: "seed-recipe-1" },
-    update: {},
+    update: {
+      isShared: true,
+      isFeatured: true,
+      shareTitle: "Midnight Calm Ritual",
+    },
     create: {
       id: "seed-recipe-1",
       name: "My Evening Ritual",
+      shareTitle: "Midnight Calm Ritual",
       notes: "Perfect before bed. Steep covered for 5 minutes.",
       rating: 5,
       brewCount: 12,
       lastBrewed: new Date(),
+      isShared: true,
+      isFeatured: true,
+      blendId: blend.id,
+      userId: user.id,
+    },
+  });
+
+  // Second shared recipe as a recommendation
+  await prisma.recipe.upsert({
+    where: { id: "seed-recipe-2" },
+    update: {
+      isShared: true,
+      isFeatured: true,
+      shareTitle: "Golden Hour Glow",
+    },
+    create: {
+      id: "seed-recipe-2",
+      name: "Morning Sencha",
+      shareTitle: "Golden Hour Glow",
+      notes: "Light and grassy. Perfect for slow mornings.",
+      rating: 4,
+      brewCount: 8,
+      isShared: true,
+      isFeatured: true,
       blendId: blend.id,
       userId: user.id,
     },

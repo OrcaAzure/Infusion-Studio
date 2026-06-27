@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, Star, Trash2, Timer } from "lucide-react";
+import { BookOpen, Star, Trash2, Timer, Share2, Instagram } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
+import { ShareRecipeModal } from "@/components/discover/share-recipe-modal";
 import { Card } from "@/components/ui/card";
 import { CategoryBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,8 @@ import type { RecipeWithBlend } from "@/types";
 export default function RecipesPage() {
   const [recipes, setRecipes] = useState<RecipeWithBlend[]>([]);
   const [loading, setLoading] = useState(true);
+  const [shareRecipe, setShareRecipe] = useState<RecipeWithBlend | null>(null);
+  const [socialHandle, setSocialHandle] = useState("oven_infusion");
   const setDuration = useTimerStore((s) => s.setDuration);
 
   const fetchRecipes = () => {
@@ -26,6 +29,9 @@ export default function RecipesPage() {
 
   useEffect(() => {
     fetchRecipes();
+    fetch("/api/profile")
+      .then((r) => r.json())
+      .then((p) => p?.socialHandle && setSocialHandle(p.socialHandle));
   }, []);
 
   const handleDelete = async (id: string) => {
@@ -44,6 +50,14 @@ export default function RecipesPage() {
       <DashboardHeader
         title="Saved Recipes"
         description="Your documented brewing rituals"
+        action={
+          <Link href="/oven-infusion">
+            <Button variant="outline">
+              <Instagram className="h-4 w-4" />
+              Oven Infusion
+            </Button>
+          </Link>
+        }
       />
 
       {loading ? (
@@ -60,9 +74,16 @@ export default function RecipesPage() {
             <Card key={recipe.id} hover>
               <div className="mb-3 flex items-start justify-between">
                 <div>
-                  <h3 className="font-semibold text-stone-900 dark:text-stone-100">
-                    {recipe.name}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-stone-900 dark:text-stone-100">
+                      {recipe.shareTitle ?? recipe.name}
+                    </h3>
+                    {recipe.isShared && (
+                      <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                        Shared
+                      </span>
+                    )}
+                  </div>
                   <Link
                     href={`/blends/${recipe.blend.id}`}
                     className="text-sm text-emerald-600 hover:underline dark:text-emerald-400"
@@ -97,6 +118,10 @@ export default function RecipesPage() {
                   {recipe.blend.brewTime && ` · ${formatTime(recipe.blend.brewTime)}`}
                 </div>
                 <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={() => setShareRecipe(recipe)}>
+                    <Share2 className="h-3.5 w-3.5" />
+                    Share
+                  </Button>
                   <Button size="sm" onClick={() => startBrew(recipe)}>
                     <Timer className="h-3.5 w-3.5" />
                     Brew
@@ -113,6 +138,16 @@ export default function RecipesPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {shareRecipe && (
+        <ShareRecipeModal
+          recipe={shareRecipe}
+          socialHandle={socialHandle}
+          isOpen={!!shareRecipe}
+          onClose={() => setShareRecipe(null)}
+          onShared={fetchRecipes}
+        />
       )}
     </div>
   );

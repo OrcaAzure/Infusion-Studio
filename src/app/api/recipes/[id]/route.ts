@@ -28,6 +28,9 @@ export async function PUT(request: Request, context: RouteContext) {
         ...(body.rating !== undefined && { rating: body.rating }),
         ...(body.brewCount !== undefined && { brewCount: body.brewCount }),
         ...(body.lastBrewed !== undefined && { lastBrewed: new Date(body.lastBrewed) }),
+        ...(body.isShared !== undefined && { isShared: body.isShared }),
+        ...(body.shareTitle !== undefined && { shareTitle: body.shareTitle }),
+        ...(body.isFeatured !== undefined && { isFeatured: body.isFeatured }),
       },
       include: {
         blend: {

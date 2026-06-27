@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { CATEGORY_COLORS, CATEGORY_LABELS } from "@/lib/utils";
+import { CATEGORY_COLORS, CATEGORY_LABELS, GLOW_COLORS } from "@/lib/utils";
 
 interface BadgeProps {
   category: string;
@@ -9,6 +9,7 @@ interface BadgeProps {
 export function CategoryBadge({ category, className }: BadgeProps) {
   return (
     <span
+      data-glow-color={GLOW_COLORS[category] ?? GLOW_COLORS.OTHER}
       className={cn(
         "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
         CATEGORY_COLORS[category] ?? CATEGORY_COLORS.OTHER,

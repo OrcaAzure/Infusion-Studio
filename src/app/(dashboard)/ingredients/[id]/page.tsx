@@ -9,6 +9,7 @@ import { CategoryBadge, StatusBadge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/empty-state";
+import { PairingSuggestions } from "@/components/ingredients/pairing-suggestions";
 import { formatCurrency } from "@/lib/utils";
 import type { IngredientWithMeta } from "@/types";
 
@@ -76,13 +77,13 @@ export default function IngredientDetailPage() {
             )}
           </div>
 
-          {ingredient.flavorNotes.length > 0 && (
+          {Array.isArray(ingredient.flavorNotes) && ingredient.flavorNotes.length > 0 && (
             <div className="mb-6">
               <h3 className="mb-2 text-sm font-medium text-stone-700 dark:text-stone-300">
                 Flavor Profile
               </h3>
               <div className="flex flex-wrap gap-2">
-                {ingredient.flavorNotes.map((note) => (
+                {(ingredient.flavorNotes as string[]).map((note) => (
                   <span
                     key={note}
                     className="rounded-full bg-emerald-50 px-3 py-1 text-sm text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
@@ -123,8 +124,11 @@ export default function IngredientDetailPage() {
           </div>
         </Card>
 
-        <Card>
-          <CardTitle className="mb-4">Used in Blends</CardTitle>
+        <div className="space-y-6">
+          <PairingSuggestions ingredientId={ingredient.id} ingredientName={ingredient.name} />
+
+          <Card>
+            <CardTitle className="mb-4">Used in Blends</CardTitle>
           {ingredient.blendItems?.length > 0 ? (
             <div className="space-y-2">
               {ingredient.blendItems.map(({ blend }) => (
@@ -140,7 +144,8 @@ export default function IngredientDetailPage() {
           ) : (
             <p className="text-sm text-stone-500">Not used in any blends yet</p>
           )}
-        </Card>
+          </Card>
+        </div>
       </div>
     </div>
   );

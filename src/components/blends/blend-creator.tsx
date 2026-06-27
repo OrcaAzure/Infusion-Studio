@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { BlendPairingHints } from "./blend-pairing-hints";
 import type { IngredientWithMeta } from "@/types";
 
 interface BlendCreatorProps {
@@ -63,6 +64,8 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
 
   const canvasIds = items.map((i) => i.ingredientId);
   const usedIds = new Set(items.map((i) => i.ingredientId));
+  const availableIngredients = ingredients.filter((i) => !usedIds.has(i.id));
+  const anchorId = items.length > 0 ? items[items.length - 1].ingredientId : null;
 
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current;
@@ -166,6 +169,7 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
         {/* Ingredient palette */}
         <Card>
           <CardTitle className="mb-4">Ingredient Palette</CardTitle>
+          <BlendPairingHints anchorId={anchorId} available={availableIngredients} />
           <div className="max-h-[500px] space-y-2 overflow-y-auto pr-1">
             {ingredients.map((ing) => (
               <DraggableIngredient

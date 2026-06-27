@@ -1,21 +1,53 @@
-import { cn } from "@/lib/utils";
-import { type HTMLAttributes } from "react";
+import { cn, GLOW_COLORS } from "@/lib/utils";
+import { type CSSProperties, type HTMLAttributes } from "react";
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
   hover?: boolean;
+  glowColor?: string;
+  /** Soft colored backlight behind the card */
+  backlight?: boolean;
 }
 
-export function Card({ className, hover, children, ...props }: CardProps) {
+export function Card({
+  className,
+  hover,
+  glowColor,
+  backlight = true,
+  children,
+  ...props
+}: CardProps) {
+  const color = glowColor ?? GLOW_COLORS.brand;
+
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-700 dark:bg-stone-900",
-        hover && "transition-all duration-200 hover:shadow-md hover:border-emerald-200 dark:hover:border-emerald-800",
-        className
+    <div className="group relative">
+      {backlight && (
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute -inset-1 rounded-2xl opacity-40 blur-2xl transition-all duration-500",
+            "bg-[radial-gradient(ellipse_at_50%_0%,var(--card-glow),transparent_65%)]",
+            hover && "group-hover:opacity-70 group-hover:blur-3xl"
+          )}
+          style={{ "--card-glow": `${color}55` } as CSSProperties}
+        />
       )}
-      {...props}
-    >
-      {children}
+
+      <div
+        data-glow-color={color}
+        className={cn(
+          "relative rounded-xl border border-stone-200/80 bg-white/85 p-6 shadow-sm backdrop-blur-md",
+          "ring-1 ring-white/40 dark:border-stone-700/80 dark:bg-stone-900/85 dark:ring-white/5",
+          "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit]",
+          "before:bg-[radial-gradient(ellipse_at_50%_-20%,var(--card-glow-inner),transparent_55%)] before:opacity-60",
+          hover &&
+            "transition-all duration-300 hover:border-emerald-200/80 hover:shadow-lg hover:shadow-emerald-500/10 dark:hover:border-emerald-800/80",
+          className
+        )}
+        style={{ "--card-glow-inner": `${color}33` } as CSSProperties}
+        {...props}
+      >
+        {children}
+      </div>
     </div>
   );
 }

@@ -16,6 +16,7 @@ model User {
   emailVerified DateTime?
   image         String?
   password      String?
+  socialHandle  String?         @unique
   accounts      Account[]
   sessions      Session[]
   ingredients   Ingredient[]
@@ -127,10 +128,13 @@ model BlendIngredient {
 model Recipe {
   id         String    @id @default(cuid())
   name       String
+  shareTitle String?
   notes      String?
   rating     Int?
   brewCount  Int       @default(0)
   lastBrewed DateTime?
+  isShared   Boolean   @default(false)
+  isFeatured Boolean   @default(false)
   blendId    String
   blend      Blend     @relation(fields: [blendId], references: [id], onDelete: Cascade)
   userId     String
@@ -140,6 +144,7 @@ model Recipe {
 
   @@index([userId])
   @@index([blendId])
+  @@index([isShared])
 }
 
 model FavoriteBlend {

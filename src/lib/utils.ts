@@ -31,6 +31,17 @@ export const CATEGORY_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
+/** Glow colors for cursor aura (hex) */
+export const GLOW_COLORS: Record<string, string> = {
+  TEA: "#10b981",
+  HERB: "#22c55e",
+  SPICE: "#f97316",
+  FRUIT: "#eab308",
+  FLOWER: "#a855f7",
+  OTHER: "#78716c",
+  brand: "#059669",
+};
+
 /** Category color mapping for badges */
 export const CATEGORY_COLORS: Record<string, string> = {
   TEA: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",

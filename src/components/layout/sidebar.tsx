@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Droplets,
+  Instagram,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores";
@@ -26,6 +27,7 @@ const navItems = [
   { href: "/blends/create", label: "Blend Creator", icon: FlaskConical },
   { href: "/blends", label: "My Blends", icon: Droplets },
   { href: "/recipes", label: "Recipes", icon: BookOpen },
+  { href: "/oven-infusion", label: "Oven Infusion", icon: Instagram },
   { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/timer", label: "Brew Timer", icon: Timer },
 ];
@@ -115,7 +117,7 @@ export function Sidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-stone-200 bg-white p-4 transition-transform duration-300 dark:border-stone-700 dark:bg-stone-900",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-stone-200/80 bg-white/80 p-4 backdrop-blur-xl transition-transform duration-300 dark:border-stone-700/80 dark:bg-stone-900/80",
           "lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
