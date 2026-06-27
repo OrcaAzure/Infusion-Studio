@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import { motion } from "framer-motion";
 import { Package, ArrowRight } from "lucide-react";
 import { CategoryBadge, StatusBadge } from "@/components/ui/badge";
@@ -24,7 +24,7 @@ export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      <Link href={`/ingredients/${ingredient.id}`}>
+      <AppLink href={`/ingredients/${ingredient.id}`}>
         <Card hover className="group h-full">
           <div className="mb-3 flex items-start justify-between">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
@@ -66,7 +66,7 @@ export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
             </div>
           )}
         </Card>
-      </Link>
+      </AppLink>
     </motion.div>
   );
 }

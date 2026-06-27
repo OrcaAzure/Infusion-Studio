@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const ingredientUnits = ["g", "oz", "ml", "L", "tsp", "tbsp", "cup", "pcs", "bag"] as const;
+
 export const ingredientCategories = [
   "TEA",
   "HERB",

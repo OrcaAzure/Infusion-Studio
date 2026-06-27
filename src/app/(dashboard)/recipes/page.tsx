@@ -1,19 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { BookOpen, Star, Trash2, Timer, Share2, Instagram } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { ShareRecipeModal } from "@/components/discover/share-recipe-modal";
 import { Card } from "@/components/ui/card";
 import { CategoryBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AppLink } from "@/components/ui/app-link";
 import { LoadingSpinner, EmptyState } from "@/components/ui/empty-state";
 import { useTimerStore } from "@/stores";
 import { formatTime } from "@/lib/utils";
+import { appPath } from "@/lib/app-path";
 import type { RecipeWithBlend } from "@/types";
 
 export default function RecipesPage() {
+  const router = useRouter();
   const [recipes, setRecipes] = useState<RecipeWithBlend[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareRecipe, setShareRecipe] = useState<RecipeWithBlend | null>(null);
@@ -42,7 +45,7 @@ export default function RecipesPage() {
 
   const startBrew = (recipe: RecipeWithBlend) => {
     setDuration(recipe.blend.brewTime ?? 300, recipe.name);
-    window.location.href = "/timer";
+    router.push(appPath("/timer"));
   };
 
   return (
@@ -51,12 +54,12 @@ export default function RecipesPage() {
         title="Saved Recipes"
         description="Your documented brewing rituals"
         action={
-          <Link href="/oven-infusion">
+          <AppLink href="/oven-infusion">
             <Button variant="outline">
               <Instagram className="h-4 w-4" />
               Oven Infusion
             </Button>
-          </Link>
+          </AppLink>
         }
       />
 
@@ -84,12 +87,12 @@ export default function RecipesPage() {
                       </span>
                     )}
                   </div>
-                  <Link
+                  <AppLink
                     href={`/blends/${recipe.blend.id}`}
                     className="text-sm text-emerald-600 hover:underline dark:text-emerald-400"
                   >
                     {recipe.blend.name}
-                  </Link>
+                  </AppLink>
                 </div>
                 {recipe.rating && (
                   <div className="flex items-center gap-0.5">

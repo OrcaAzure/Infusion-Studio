@@ -8,19 +8,13 @@ import { formatTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-interface BrewTimerProps {
-  defaultSeconds?: number;
-  blendName?: string;
-}
-
-export function BrewTimer({ defaultSeconds = 300, blendName = "" }: BrewTimerProps) {
+export function BrewTimer() {
   const {
     seconds,
     initialSeconds,
     isRunning,
     isComplete,
-    blendName: storeBlendName,
-    setDuration,
+    blendName,
     start,
     pause,
     reset,
@@ -28,13 +22,7 @@ export function BrewTimer({ defaultSeconds = 300, blendName = "" }: BrewTimerPro
   } = useTimerStore();
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const displayName = storeBlendName || blendName;
 
-  useEffect(() => {
-    setDuration(defaultSeconds, blendName);
-  }, [defaultSeconds, blendName, setDuration]);
-
-  // Tick interval
   useEffect(() => {
     if (isRunning) {
       intervalRef.current = setInterval(tick, 1000);
@@ -44,16 +32,15 @@ export function BrewTimer({ defaultSeconds = 300, blendName = "" }: BrewTimerPro
     };
   }, [isRunning, tick]);
 
-  // Browser notification on completion
   useEffect(() => {
     if (isComplete && "Notification" in window) {
       if (Notification.permission === "granted") {
         new Notification("Brew Complete!", {
-          body: displayName ? `${displayName} is ready to enjoy` : "Your infusion is ready",
+          body: blendName ? `${blendName} is ready to enjoy` : "Your infusion is ready",
         });
       }
     }
-  }, [isComplete, displayName]);
+  }, [isComplete, blendName]);
 
   const requestNotification = useCallback(() => {
     if ("Notification" in window && Notification.permission === "default") {
@@ -61,15 +48,15 @@ export function BrewTimer({ defaultSeconds = 300, blendName = "" }: BrewTimerPro
     }
   }, []);
 
-  const progress = ((initialSeconds - seconds) / initialSeconds) * 100;
+  const progress = initialSeconds > 0 ? ((initialSeconds - seconds) / initialSeconds) * 100 : 0;
   const circumference = 2 * Math.PI * 120;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
     <Card className="mx-auto max-w-md text-center">
-      {displayName && (
+      {blendName && (
         <p className="mb-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-          Brewing: {displayName}
+          Brewing: {blendName}
         </p>
       )}
 

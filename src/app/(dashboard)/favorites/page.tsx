@@ -1,17 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Heart, Timer } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { Card } from "@/components/ui/card";
 import { CategoryBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AppLink } from "@/components/ui/app-link";
 import { LoadingSpinner, EmptyState } from "@/components/ui/empty-state";
 import { useTimerStore } from "@/stores";
+import { appPath } from "@/lib/app-path";
 import type { FavoriteWithBlend } from "@/types";
 
 export default function FavoritesPage() {
+  const router = useRouter();
   const [favorites, setFavorites] = useState<FavoriteWithBlend[]>([]);
   const [loading, setLoading] = useState(true);
   const setDuration = useTimerStore((s) => s.setDuration);
@@ -34,7 +37,7 @@ export default function FavoritesPage() {
 
   const startBrew = (fav: FavoriteWithBlend) => {
     setDuration(fav.blend.brewTime ?? 300, fav.blend.name);
-    window.location.href = "/timer";
+    router.push(appPath("/timer"));
   };
 
   return (
@@ -64,11 +67,11 @@ export default function FavoritesPage() {
                 <Heart className="h-5 w-5 fill-current" />
               </button>
 
-              <Link href={`/blends/${fav.blend.id}`}>
+              <AppLink href={`/blends/${fav.blend.id}`}>
                 <h3 className="mb-1 pr-8 font-semibold text-stone-900 dark:text-stone-100">
                   {fav.blend.name}
                 </h3>
-              </Link>
+              </AppLink>
 
               {fav.blend.description && (
                 <p className="mb-3 line-clamp-2 text-sm text-stone-500">

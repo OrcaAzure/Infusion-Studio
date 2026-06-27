@@ -1,13 +1,15 @@
+"use client";
+
+import { Leaf } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { IngredientForm } from "@/components/ingredients/ingredient-form";
 import { Card } from "@/components/ui/card";
-
-export const metadata = { title: "Add Ingredient" };
 
 export default function NewIngredientPage() {
   return (
     <div>
       <DashboardHeader
+        icon={Leaf}
         title="Add Ingredient"
         description="Add a new item to your inventory"
       />

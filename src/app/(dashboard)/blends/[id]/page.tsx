@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import {
   Heart,
   Timer,
@@ -113,27 +113,27 @@ export default function BlendDetailPage() {
         title={blend.name}
         description={blend.description ?? undefined}
         action={
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={toggleFavorite}>
+          <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+            <Button variant="outline" onClick={toggleFavorite} className="col-span-1">
               <Heart
                 className={`h-4 w-4 ${isFavorited ? "fill-red-500 text-red-500" : ""}`}
               />
-              {isFavorited ? "Favorited" : "Favorite"}
+              <span className="hidden sm:inline">{isFavorited ? "Favorited" : "Favorite"}</span>
             </Button>
-            <Button variant="outline" onClick={() => setShowRecipeModal(true)}>
+            <Button variant="outline" onClick={() => setShowRecipeModal(true)} className="col-span-1">
               <BookOpen className="h-4 w-4" />
-              Save recipe
+              <span className="hidden sm:inline">Save recipe</span>
             </Button>
-            <Button onClick={startTimer}>
+            <Button onClick={startTimer} className="col-span-2 sm:col-span-1">
               <Timer className="h-4 w-4" />
               Brew
             </Button>
-            <Link href={`/blends/${id}/edit`}>
-              <Button variant="outline">
+            <AppLink href={`/blends/${id}/edit`} className="col-span-1">
+              <Button variant="outline" className="w-full">
                 <Pencil className="h-4 w-4" />
               </Button>
-            </Link>
-            <Button variant="destructive" onClick={handleDelete}>
+            </AppLink>
+            <Button variant="destructive" onClick={handleDelete} className="col-span-1">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -171,12 +171,12 @@ export default function BlendDetailPage() {
                   {index + 1}
                 </span>
                 <div>
-                  <Link
+                  <AppLink
                     href={`/ingredients/${bi.ingredient.id}`}
                     className="font-medium text-stone-900 hover:text-emerald-600 dark:text-stone-100"
                   >
                     {bi.ingredient.name}
-                  </Link>
+                  </AppLink>
                   <div className="mt-0.5">
                     <CategoryBadge category={bi.ingredient.category} />
                   </div>

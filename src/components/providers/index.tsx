@@ -7,6 +7,8 @@ import { CursorAura } from "@/components/ui/cursor-aura";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { OfflineDemoProvider } from "./offline-demo-provider";
+import { AndroidBackButton } from "@/components/native/android-back-button";
+import { ToastHost } from "@/components/ui/toast";
 
 const offlineDemo = process.env.NEXT_PUBLIC_OFFLINE_DEMO === "true";
 
@@ -25,6 +27,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider>
         <OfflineDemoProvider>
           {!offlineDemo && <ServiceWorkerRegister />}
+          <AndroidBackButton />
+          <ToastHost />
           <CursorAura />
           {children}
           {!offlineDemo && <InstallPrompt />}

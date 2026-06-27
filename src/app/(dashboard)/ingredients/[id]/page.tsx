@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
-import { Pencil, Trash2, MapPin, Package } from "lucide-react";
+import { AppLink } from "@/components/ui/app-link";
+import { Pencil, Trash2, MapPin, Package, Leaf } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { CategoryBadge, StatusBadge } from "@/components/ui/badge";
 import { Card, CardTitle } from "@/components/ui/card";
@@ -47,16 +47,17 @@ export default function IngredientDetailPage() {
   return (
     <div>
       <DashboardHeader
+        icon={Leaf}
         title={ingredient.name}
         description={ingredient.description ?? undefined}
         action={
           <div className="flex gap-2">
-            <Link href={`/ingredients/${id}/edit`}>
+            <AppLink href={`/ingredients/${id}/edit`}>
               <Button variant="outline">
                 <Pencil className="h-4 w-4" />
                 Edit
               </Button>
-            </Link>
+            </AppLink>
             <Button variant="destructive" onClick={handleDelete}>
               <Trash2 className="h-4 w-4" />
               Delete
@@ -133,13 +134,13 @@ export default function IngredientDetailPage() {
           {ingredient.blendItems?.length > 0 ? (
             <div className="space-y-2">
               {ingredient.blendItems.map(({ blend }) => (
-                <Link
+                <AppLink
                   key={blend.id}
                   href={`/blends/${blend.id}`}
                   className="block rounded-lg border border-stone-200 p-3 text-sm transition-colors hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800"
                 >
                   {blend.name}
-                </Link>
+                </AppLink>
               ))}
             </div>
           ) : (

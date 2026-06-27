@@ -23,11 +23,7 @@ export async function GET(request: NextRequest) {
     userId: user.id,
     ...(category && { category }),
     ...(search && {
-      OR: [
-        { name: { contains: search } },
-        { description: { contains: search } },
-        { origin: { contains: search } },
-      ],
+      name: { contains: search },
     }),
   };
 

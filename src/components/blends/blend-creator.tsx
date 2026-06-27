@@ -22,6 +22,7 @@ import { useDndSensors } from "@/hooks/use-dnd-sensors";
 import { DraggableIngredient } from "./draggable-ingredient";
 import { CanvasItem } from "./canvas-item";
 import { DropZone } from "./drop-zone";
+import { NumberInput } from "@/components/ui/number-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -216,17 +217,19 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
                 rows={2}
               />
               <div className="grid grid-cols-2 gap-3">
-                <Input
+                <NumberInput
                   label="Brew temp (°C)"
-                  type="number"
                   value={brewTemp}
-                  onChange={(e) => setBrewTemp(parseInt(e.target.value) || 90)}
+                  onChange={setBrewTemp}
+                  min={40}
+                  max={100}
                 />
-                <Input
+                <NumberInput
                   label="Brew time (sec)"
-                  type="number"
                   value={brewTime}
-                  onChange={(e) => setBrewTime(parseInt(e.target.value) || 300)}
+                  onChange={setBrewTime}
+                  min={30}
+                  max={3600}
                 />
               </div>
             </div>

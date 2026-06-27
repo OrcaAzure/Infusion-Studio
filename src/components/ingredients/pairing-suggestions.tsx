@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, FlaskConical } from "lucide-react";
 import { CategoryBadge } from "@/components/ui/badge";
@@ -73,14 +73,14 @@ export function PairingSuggestions({ ingredientId, ingredientName }: PairingSugg
         ))}
       </div>
 
-      <Link
+      <AppLink
         href="/blends/create"
         className="mt-4 flex items-center justify-center gap-2 rounded-lg border border-dashed border-emerald-300 py-2.5 text-sm font-medium text-emerald-600 transition-colors hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-400 dark:hover:bg-emerald-900/20"
       >
         <FlaskConical className="h-4 w-4" />
         Blend these together
         <ArrowRight className="h-3.5 w-3.5" />
-      </Link>
+      </AppLink>
     </Card>
   );
 }
@@ -95,7 +95,7 @@ function PairingRow({ pairing, index }: { pairing: PairingResult; index: number 
       animate={{ opacity: 1, x: 0 }}
       transition={{ delay: index * 0.08 }}
     >
-      <Link
+      <AppLink
         href={`/ingredients/${ingredient.id}`}
         className="group block rounded-lg border border-stone-200 p-3 transition-all hover:border-emerald-300 hover:shadow-sm dark:border-stone-700 dark:hover:border-emerald-700"
         data-glow-color={GLOW_COLORS[ingredient.category]}
@@ -127,7 +127,7 @@ function PairingRow({ pairing, index }: { pairing: PairingResult; index: number 
             {reasons[0]}
           </p>
         )}
-      </Link>
+      </AppLink>
     </motion.div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import { Plus, Leaf } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { IngredientCard } from "@/components/ingredients/ingredient-card";
@@ -41,12 +41,12 @@ export default function IngredientsPage() {
         title="Ingredient Inventory"
         description="Manage your teas, herbs, spices, and more"
         action={
-          <Link href="/ingredients/new">
+          <AppLink href="/ingredients/new">
             <Button>
               <Plus className="h-4 w-4" />
               Add ingredient
             </Button>
-          </Link>
+          </AppLink>
         }
       />
 
@@ -62,9 +62,9 @@ export default function IngredientsPage() {
           title="No ingredients found"
           description="Start building your inventory by adding your first ingredient"
           action={
-            <Link href="/ingredients/new">
+            <AppLink href="/ingredients/new">
               <Button>Add ingredient</Button>
-            </Link>
+            </AppLink>
           }
         />
       ) : (

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { Leaf } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { IngredientForm } from "@/components/ingredients/ingredient-form";
 import { Card } from "@/components/ui/card";
@@ -26,6 +27,7 @@ export default function EditIngredientPage() {
   return (
     <div>
       <DashboardHeader
+        icon={Leaf}
         title={`Edit ${ingredient.name}`}
         description="Update ingredient details"
       />

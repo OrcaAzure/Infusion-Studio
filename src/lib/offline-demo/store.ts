@@ -142,12 +142,7 @@ export const offlineStore = {
     if (category) items = items.filter((i) => i.category === category);
     if (search) {
       const q = search.toLowerCase();
-      items = items.filter(
-        (i) =>
-          i.name.toLowerCase().includes(q) ||
-          (i.description ?? "").toLowerCase().includes(q) ||
-          (i.origin ?? "").toLowerCase().includes(q)
-      );
+      items = items.filter((i) => i.name.toLowerCase().includes(q));
     }
 
     items = [...items].sort((a, b) => {

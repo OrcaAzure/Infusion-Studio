@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { AppLink } from "@/components/ui/app-link";
 import { Plus, FlaskConical } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { Card } from "@/components/ui/card";
@@ -33,12 +33,12 @@ export default function BlendsPage() {
         title="My Blends"
         description="All your crafted infusion blends"
         action={
-          <Link href="/blends/create">
+          <AppLink href="/blends/create">
             <Button>
               <Plus className="h-4 w-4" />
               New blend
             </Button>
-          </Link>
+          </AppLink>
         }
       />
 
@@ -59,15 +59,15 @@ export default function BlendsPage() {
           title="No blends yet"
           description="Create your first custom infusion blend"
           action={
-            <Link href="/blends/create">
+            <AppLink href="/blends/create">
               <Button>Create blend</Button>
-            </Link>
+            </AppLink>
           }
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {blends.map((blend) => (
-            <Link key={blend.id} href={`/blends/${blend.id}`}>
+            <AppLink key={blend.id} href={`/blends/${blend.id}`}>
               <Card hover className="h-full">
                 <h3 className="mb-1 font-semibold text-stone-900 dark:text-stone-100">
                   {blend.name}
@@ -87,7 +87,7 @@ export default function BlendsPage() {
                   {blend.brewTime && <span>{Math.floor(blend.brewTime / 60)}m brew</span>}
                 </div>
               </Card>
-            </Link>
+            </AppLink>
           ))}
         </div>
       )}
