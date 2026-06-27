@@ -37,6 +37,16 @@ yarn-error.log*
 prisma/dev.db
 prisma/dev.db-journal
 
+# Android build outputs
+.android-sdk/
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+
+# QA release APKs (keep latest — remove line to commit APK)
+# releases/
+
 # vercel
 .vercel
 

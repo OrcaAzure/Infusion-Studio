@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/ui/empty-state";
 import { useTimerStore } from "@/stores";
 import { formatTime } from "@/lib/utils";
+import { appPath } from "@/lib/app-path";
 import type { BlendWithIngredients } from "@/types";
 
 interface BlendDetail extends BlendWithIngredients {
@@ -72,7 +73,7 @@ export default function BlendDetailPage() {
   const handleDelete = async () => {
     if (!confirm("Delete this blend?")) return;
     await fetch(`/api/blends/${id}`, { method: "DELETE" });
-    router.push("/blends");
+    router.push(appPath("/blends"));
   };
 
   const handleSaveRecipe = async () => {
@@ -98,7 +99,7 @@ export default function BlendDetailPage() {
 
   const startTimer = () => {
     setDuration(blend?.brewTime ?? 300, blend?.name ?? "");
-    router.push("/timer");
+    router.push(appPath("/timer"));
   };
 
   if (loading) return <LoadingSpinner />;

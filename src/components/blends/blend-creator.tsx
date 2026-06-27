@@ -6,9 +6,8 @@ import {
   DndContext,
   DragOverlay,
   closestCenter,
-  PointerSensor,
-  useSensor,
-  useSensors,
+  pointerWithin,
+  type CollisionDetection,
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
@@ -19,6 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { FlaskConical, Save, RotateCcw } from "lucide-react";
 import { useBlendStore } from "@/stores";
+import { useDndSensors } from "@/hooks/use-dnd-sensors";
 import { DraggableIngredient } from "./draggable-ingredient";
 import { CanvasItem } from "./canvas-item";
 import { DropZone } from "./drop-zone";
@@ -27,6 +27,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { parseFlavorNotes } from "@/lib/utils";
+import { appPath } from "@/lib/app-path";
 import { BlendPairingHints } from "./blend-pairing-hints";
 import type { IngredientWithMeta } from "@/types";
 
@@ -58,14 +60,31 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
     reset,
   } = useBlendStore();
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  );
+  const sensors = useDndSensors();
 
   const canvasIds = items.map((i) => i.ingredientId);
   const usedIds = new Set(items.map((i) => i.ingredientId));
   const availableIngredients = ingredients.filter((i) => !usedIds.has(i.id));
   const anchorId = items.length > 0 ? items[items.length - 1].ingredientId : null;
+
+  const addIngredientToCanvas = (ing: IngredientWithMeta) => {
+    if (usedIds.has(ing.id)) return;
+    addItem({
+      ingredientId: ing.id,
+      name: ing.name,
+      category: ing.category,
+      amount: 2,
+      unit: ing.unit,
+      order: items.length,
+      flavorNotes: parseFlavorNotes(ing.flavorNotes),
+    });
+  };
+
+  const collisionDetection: CollisionDetection = (args) => {
+    const pointerHits = pointerWithin(args);
+    if (pointerHits.length > 0) return pointerHits;
+    return closestCenter(args);
+  };
 
   const handleDragStart = (event: DragStartEvent) => {
     const data = event.active.data.current;
@@ -88,15 +107,7 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
       const droppedOnCanvas =
         over.id === "blend-canvas" || canvasIds.includes(over.id as string);
       if (!usedIds.has(ing.id) && droppedOnCanvas) {
-        addItem({
-          ingredientId: ing.id,
-          name: ing.name,
-          category: ing.category,
-          amount: 2,
-          unit: ing.unit,
-          order: items.length,
-          flavorNotes: ing.flavorNotes,
-        });
+        addIngredientToCanvas(ing);
       }
       return;
     }
@@ -155,13 +166,13 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
 
     const blend = await res.json();
     reset();
-    router.push(`/blends/${blend.id}`);
+    router.push(appPath(`/blends/${blend.id}`));
   };
 
   return (
     <DndContext
       sensors={sensors}
-      collisionDetection={closestCenter}
+      collisionDetection={collisionDetection}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
@@ -176,6 +187,7 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
                 key={ing.id}
                 ingredient={ing}
                 isInCanvas={usedIds.has(ing.id)}
+                onQuickAdd={addIngredientToCanvas}
               />
             ))}
             {ingredients.length === 0 && (
@@ -224,7 +236,7 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
               id="blend-canvas"
               className="min-h-[200px] space-y-2 rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50/30 p-3 transition-colors dark:border-emerald-700 dark:bg-emerald-900/10"
               isEmpty={items.length === 0}
-              emptyMessage="Drag ingredients here to build your blend"
+              emptyMessage="Drag here or tap + on an ingredient to add"
             >
               <SortableContext items={canvasIds} strategy={verticalListSortingStrategy}>
                 {items.map((item) => (

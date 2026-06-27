@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { LoadingSpinner } from "@/components/ui/empty-state";
 import { PairingSuggestions } from "@/components/ingredients/pairing-suggestions";
 import { formatCurrency } from "@/lib/utils";
+import { appPath } from "@/lib/app-path";
 import type { IngredientWithMeta } from "@/types";
 
 interface IngredientDetail extends IngredientWithMeta {
@@ -35,7 +36,7 @@ export default function IngredientDetailPage() {
   const handleDelete = async () => {
     if (!confirm("Delete this ingredient? It will be removed from all blends.")) return;
     await fetch(`/api/ingredients/${id}`, { method: "DELETE" });
-    router.push("/ingredients");
+    router.push(appPath("/ingredients"));
   };
 
   if (loading) return <LoadingSpinner />;

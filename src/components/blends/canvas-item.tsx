@@ -29,6 +29,7 @@ export function CanvasItem({ item, onAmountChange, onRemove }: CanvasItemProps) 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    touchAction: "none" as const,
   };
 
   return (

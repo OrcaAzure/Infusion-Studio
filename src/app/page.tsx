@@ -5,6 +5,8 @@ import { Droplets, Leaf, FlaskConical, Timer, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FadeIn, StaggerContainer, StaggerItem } from "@/components/ui/motion";
 
+export const dynamic = "force-static";
+
 const features = [
   {
     icon: Leaf,

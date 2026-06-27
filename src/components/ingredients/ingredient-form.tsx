@@ -10,7 +10,8 @@ import {
   ingredientCategories,
   type IngredientInput,
 } from "@/lib/validations/ingredient";
-import { CATEGORY_LABELS } from "@/lib/utils";
+import { CATEGORY_LABELS, parseFlavorNotes } from "@/lib/utils";
+import { appPath } from "@/lib/app-path";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +27,7 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
   const router = useRouter();
   const isEditing = !!ingredient;
   const [flavorNotes, setFlavorNotes] = useState<string[]>(
-    ingredient?.flavorNotes ?? []
+    ingredient ? parseFlavorNotes(ingredient.flavorNotes) : []
   );
   const [newNote, setNewNote] = useState("");
 
@@ -42,7 +43,7 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
           description: ingredient.description ?? "",
           category: ingredient.category,
           origin: ingredient.origin ?? "",
-          flavorNotes: ingredient.flavorNotes,
+          flavorNotes: ingredient ? parseFlavorNotes(ingredient.flavorNotes) : [],
           quantity: ingredient.quantity,
           unit: ingredient.unit,
           pricePerUnit: ingredient.pricePerUnit ?? undefined,
@@ -82,7 +83,7 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
     if (!res.ok) return;
 
     onSuccess?.();
-    router.push(isEditing ? `/ingredients/${ingredient.id}` : "/ingredients");
+    router.push(appPath(isEditing ? `/ingredients/${ingredient.id}` : "/ingredients"));
     router.refresh();
   };
 

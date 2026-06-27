@@ -31,7 +31,11 @@ export const CATEGORY_LABELS: Record<string, string> = {
   OTHER: "Other",
 };
 
-/** Glow colors for cursor aura (hex) */
+/** Parse flavor notes from Prisma Json field */
+export function parseFlavorNotes(notes: unknown): string[] {
+  if (Array.isArray(notes)) return notes.map(String);
+  return [];
+}
 export const GLOW_COLORS: Record<string, string> = {
   TEA: "#10b981",
   HERB: "#22c55e",

@@ -20,6 +20,7 @@ export function DropZone({ id, children, className, emptyMessage, isEmpty }: Dro
       ref={setNodeRef}
       className={cn(
         className,
+        "touch-manipulation",
         isOver && "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30"
       )}
     >

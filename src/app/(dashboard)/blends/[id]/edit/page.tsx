@@ -32,7 +32,9 @@ export default function EditBlendPage() {
           amount: bi.amount,
           unit: bi.unit,
           order: bi.order,
-          flavorNotes: bi.ingredient.flavorNotes,
+          flavorNotes: Array.isArray(bi.ingredient.flavorNotes)
+            ? (bi.ingredient.flavorNotes as string[])
+            : [],
         })),
       });
       setLoading(false);

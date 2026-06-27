@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Package, ArrowRight } from "lucide-react";
 import { CategoryBadge, StatusBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { parseFlavorNotes } from "@/lib/utils";
 import type { IngredientWithMeta } from "@/types";
 
 interface IngredientCardProps {
@@ -14,6 +15,8 @@ interface IngredientCardProps {
 
 export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
   const isLowStock = ingredient.quantity <= 50;
+
+  const notes = parseFlavorNotes(ingredient.flavorNotes);
 
   return (
     <motion.div
@@ -50,9 +53,9 @@ export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
             <ArrowRight className="h-4 w-4 text-stone-400 transition-transform group-hover:translate-x-1" />
           </div>
 
-          {ingredient.flavorNotes.length > 0 && (
+          {notes.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1">
-              {ingredient.flavorNotes.slice(0, 3).map((note) => (
+              {notes.slice(0, 3).map((note) => (
                 <span
                   key={note}
                   className="rounded-md bg-stone-100 px-2 py-0.5 text-xs text-stone-600 dark:bg-stone-800 dark:text-stone-400"

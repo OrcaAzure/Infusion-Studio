@@ -15,6 +15,7 @@ import {
   X,
   Droplets,
   Instagram,
+  Smartphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores";
@@ -30,6 +31,7 @@ const navItems = [
   { href: "/oven-infusion", label: "Oven Infusion", icon: Instagram },
   { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/timer", label: "Brew Timer", icon: Timer },
+  { href: "/qa", label: "QA / Install", icon: Smartphone },
 ];
 
 export function Sidebar() {
