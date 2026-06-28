@@ -160,24 +160,32 @@ export function DashboardHeader({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
       <div
-        className="flex items-start gap-3 pl-12 lg:pl-0"
-        style={{ paddingTop: "max(0px, calc(env(safe-area-inset-top) - 0.5rem))" }}
+        className="min-w-0 flex-1"
+        style={{ paddingTop: "max(2.75rem, calc(env(safe-area-inset-top) + 2rem))" }}
       >
-        {Icon && (
-          <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
-            <Icon className="h-5 w-5" />
-          </div>
-        )}
-        <div>
-          <h1 className="text-2xl font-bold text-stone-900 dark:text-stone-100">{title}</h1>
-          {description && (
-            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{description}</p>
+        <div className="flex items-start gap-3">
+          {Icon && (
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+              <Icon className="h-5 w-5" />
+            </div>
           )}
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold text-stone-900 sm:text-2xl dark:text-stone-100">
+              {title}
+            </h1>
+            {description && (
+              <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{description}</p>
+            )}
+          </div>
         </div>
       </div>
-      {action && <div className="flex items-center gap-2 pl-12 lg:pl-0">{action}</div>}
+      {action && (
+        <div className="flex w-full shrink-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+          {action}
+        </div>
+      )}
     </div>
   );
 }

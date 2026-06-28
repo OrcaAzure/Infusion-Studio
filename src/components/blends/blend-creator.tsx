@@ -177,12 +177,11 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Ingredient palette */}
-        <Card>
+      <div className="grid w-full min-w-0 max-w-full gap-6 overflow-x-hidden lg:grid-cols-2">
+        <Card className="min-w-0 overflow-hidden p-4 sm:p-6">
           <CardTitle className="mb-4">Ingredient Palette</CardTitle>
           <BlendPairingHints anchorId={anchorId} available={availableIngredients} />
-          <div className="max-h-[500px] space-y-2 overflow-y-auto pr-1">
+          <div className="max-h-[min(500px,50vh)] space-y-2 overflow-y-auto overflow-x-hidden overscroll-contain">
             {ingredients.map((ing) => (
               <DraggableIngredient
                 key={ing.id}
@@ -202,8 +201,8 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
         </Card>
 
         {/* Blend canvas */}
-        <div className="space-y-4">
-          <Card>
+        <div className="min-w-0 space-y-4">
+          <Card className="min-w-0 overflow-hidden p-4 sm:p-6">
             <div className="mb-4 space-y-3">
               <Input
                 placeholder="Blend name"
@@ -216,7 +215,7 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
                 onChange={(e) => setDescription(e.target.value)}
                 rows={2}
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <NumberInput
                   label="Brew temp (°C)"
                   value={brewTemp}
@@ -237,19 +236,21 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
             <CardTitle className="mb-3">Blend Canvas</CardTitle>
             <DropZone
               id="blend-canvas"
-              className="min-h-[200px] space-y-2 rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50/30 p-3 transition-colors dark:border-emerald-700 dark:bg-emerald-900/10"
+              className="min-h-[200px] rounded-lg border-2 border-dashed border-emerald-300 bg-emerald-50/30 p-3 transition-colors dark:border-emerald-700 dark:bg-emerald-900/10"
               isEmpty={items.length === 0}
               emptyMessage="Drag here or tap + on an ingredient to add"
             >
               <SortableContext items={canvasIds} strategy={verticalListSortingStrategy}>
-                {items.map((item) => (
-                  <CanvasItem
-                    key={item.ingredientId}
-                    item={item}
-                    onAmountChange={updateItemAmount}
-                    onRemove={removeItem}
-                  />
-                ))}
+                <div className="w-full min-w-0 space-y-2 overflow-hidden">
+                  {items.map((item) => (
+                    <CanvasItem
+                      key={item.ingredientId}
+                      item={item}
+                      onAmountChange={updateItemAmount}
+                      onRemove={removeItem}
+                    />
+                  ))}
+                </div>
               </SortableContext>
             </DropZone>
           </Card>
@@ -258,12 +259,12 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
             <p className="text-sm text-red-500">{error}</p>
           )}
 
-          <div className="flex gap-3">
-            <Button onClick={handleSave} isLoading={isSaving}>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button onClick={handleSave} isLoading={isSaving} className="w-full sm:w-auto">
               <Save className="h-4 w-4" />
               {editBlendId ? "Update blend" : "Save blend"}
             </Button>
-            <Button variant="outline" onClick={reset}>
+            <Button variant="outline" onClick={reset} className="w-full sm:w-auto">
               <RotateCcw className="h-4 w-4" />
               Reset
             </Button>
@@ -271,10 +272,10 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
         </div>
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeIngredient && (
-          <div className="rounded-lg border border-emerald-300 bg-white p-3 shadow-xl dark:bg-stone-800">
-            <p className="font-medium">{activeIngredient.name}</p>
+          <div className="max-w-[min(100vw-2rem,20rem)] rounded-lg border border-emerald-300 bg-white p-3 shadow-xl dark:bg-stone-800">
+            <p className="truncate font-medium">{activeIngredient.name}</p>
           </div>
         )}
       </DragOverlay>

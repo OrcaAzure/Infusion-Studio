@@ -18,7 +18,7 @@ export default function CreateBlendPage() {
   }, []);
 
   return (
-    <div>
+    <div className="w-full min-w-0 max-w-full overflow-x-hidden">
       <DashboardHeader
         title="Blend Creator"
         description="Drag ingredients from the palette to craft your blend"

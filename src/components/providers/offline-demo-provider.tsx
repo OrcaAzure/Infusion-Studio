@@ -28,10 +28,13 @@ export function OfflineDemoProvider({ children }: { children: React.ReactNode })
 
   return (
     <>
-      <div className="pointer-events-none fixed bottom-3 left-1/2 z-[100] -translate-x-1/2 rounded-full bg-emerald-600/90 px-3 py-1 text-center text-[11px] font-medium text-white shadow-lg backdrop-blur-sm">
+      <div className="pb-[calc(env(safe-area-inset-bottom,0px)+3.5rem)]">{children}</div>
+      <div
+        className="pointer-events-none fixed left-1/2 z-[100] -translate-x-1/2 rounded-full bg-emerald-600/90 px-3 py-1.5 text-center text-[11px] font-medium text-white shadow-lg backdrop-blur-sm"
+        style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+      >
         Offline demo — no internet needed
       </div>
-      {children}
     </>
   );
 }

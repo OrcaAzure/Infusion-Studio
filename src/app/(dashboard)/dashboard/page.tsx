@@ -45,8 +45,8 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Overview of your infusion studio"
         action={
-          <AppLink href="/blends/create">
-            <Button>Create blend</Button>
+          <AppLink href="/blends/create" className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto">Create blend</Button>
           </AppLink>
         }
       />
@@ -98,13 +98,13 @@ export default function DashboardPage() {
                 <AppLink
                   key={item.id}
                   href={`/ingredients/${item.id}`}
-                  className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-3 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
+                  className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
                 >
-                  <div>
-                    <p className="font-medium text-stone-900 dark:text-stone-100">{item.name}</p>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-stone-900 dark:text-stone-100">{item.name}</p>
                     <CategoryBadge category={item.category} />
                   </div>
-                  <span className="text-sm font-medium text-amber-700 dark:text-amber-400">
+                  <span className="shrink-0 text-sm font-medium text-amber-700 dark:text-amber-400">
                     {item.quantity} {item.unit}
                   </span>
                 </AppLink>

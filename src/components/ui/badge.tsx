@@ -11,7 +11,7 @@ export function CategoryBadge({ category, className }: BadgeProps) {
     <span
       data-glow-color={GLOW_COLORS[category] ?? GLOW_COLORS.OTHER}
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+        "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[10px] font-medium leading-tight sm:px-2.5 sm:text-xs",
         CATEGORY_COLORS[category] ?? CATEGORY_COLORS.OTHER,
         className
       )}

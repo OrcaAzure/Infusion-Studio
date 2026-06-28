@@ -25,15 +25,15 @@ export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
       transition={{ delay: index * 0.05 }}
     >
       <AppLink href={`/ingredients/${ingredient.id}`}>
-        <Card hover className="group h-full">
-          <div className="mb-3 flex items-start justify-between">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
+        <Card hover className="group h-full min-w-0">
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
               <Package className="h-5 w-5" />
             </div>
             <CategoryBadge category={ingredient.category} />
           </div>
 
-          <h3 className="mb-1 font-semibold text-stone-900 group-hover:text-emerald-600 dark:text-stone-100 dark:group-hover:text-emerald-400">
+          <h3 className="mb-1 truncate font-semibold text-stone-900 group-hover:text-emerald-600 dark:text-stone-100 dark:group-hover:text-emerald-400">
             {ingredient.name}
           </h3>
 
@@ -43,8 +43,8 @@ export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
             </p>
           )}
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
                 {ingredient.quantity} {ingredient.unit}
               </span>

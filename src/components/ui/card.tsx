@@ -19,7 +19,7 @@ export function Card({
   const color = glowColor ?? GLOW_COLORS.brand;
 
   return (
-    <div className="group relative">
+    <div className="group relative min-w-0 overflow-hidden">
       {backlight && (
         <div
           aria-hidden
@@ -35,7 +35,7 @@ export function Card({
       <div
         data-glow-color={color}
         className={cn(
-          "relative rounded-xl border border-stone-200/80 bg-white/85 p-6 shadow-sm backdrop-blur-md",
+          "relative min-w-0 rounded-xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur-md sm:p-6",
           "ring-1 ring-white/40 dark:border-stone-700/80 dark:bg-stone-900/85 dark:ring-white/5",
           "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit]",
           "before:bg-[radial-gradient(ellipse_at_50%_-20%,var(--card-glow-inner),transparent_55%)] before:opacity-60",

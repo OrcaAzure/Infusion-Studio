@@ -29,7 +29,7 @@ export function CanvasItem({ item, onAmountChange, onRemove }: CanvasItemProps) 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    touchAction: "none" as const,
+    ...(isDragging ? { touchAction: "none" as const } : {}),
   };
 
   return (
@@ -37,46 +37,57 @@ export function CanvasItem({ item, onAmountChange, onRemove }: CanvasItemProps) 
       ref={setNodeRef}
       style={style}
       className={cn(
-        "flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-800 dark:bg-emerald-900/20",
-        isDragging && "opacity-60 shadow-lg z-10"
+        "w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-800 dark:bg-emerald-900/20",
+        isDragging && "relative z-10 opacity-60 shadow-lg"
       )}
     >
-      <button
-        className="cursor-grab touch-none text-stone-400 hover:text-stone-600"
-        {...listeners}
-        {...attributes}
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
+      <div className="flex items-start gap-2">
+        <button
+          type="button"
+          className="mt-0.5 shrink-0 cursor-grab touch-none text-stone-400 hover:text-stone-600 active:cursor-grabbing"
+          aria-label={`Reorder ${item.name}`}
+          {...listeners}
+          {...attributes}
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="font-medium text-stone-900 dark:text-stone-100">{item.name}</p>
-          <CategoryBadge category={item.category} />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">
+            {item.name}
+          </p>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <CategoryBadge category={item.category} />
+            {item.flavorNotes.length > 0 && (
+              <span className="min-w-0 truncate text-xs text-stone-500">
+                {item.flavorNotes.join(", ")}
+              </span>
+            )}
+          </div>
         </div>
-        {item.flavorNotes.length > 0 && (
-          <p className="text-xs text-stone-500">{item.flavorNotes.join(", ")}</p>
-        )}
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0"
+          onClick={() => onRemove(item.ingredientId)}
+          aria-label="Remove ingredient"
+        >
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="mt-2 flex items-center gap-2 pl-6">
         <Input
           type="number"
           step="0.1"
           min="0.1"
           value={item.amount}
           onChange={(e) => onAmountChange(item.ingredientId, parseFloat(e.target.value) || 0)}
-          className="w-20 text-center"
+          className="h-9 w-20 max-w-full shrink-0 text-center"
         />
-        <span className="text-sm text-stone-500">{item.unit}</span>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onRemove(item.ingredientId)}
-          aria-label="Remove ingredient"
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <span className="truncate text-sm text-stone-500">{item.unit}</span>
       </div>
     </div>
   );
