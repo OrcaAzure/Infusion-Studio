@@ -1,16 +1,20 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppLink } from "@/components/ui/app-link";
 import { Plus, Leaf } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { IngredientCard } from "@/components/ingredients/ingredient-card";
 import { SearchFilters } from "@/components/ingredients/search-filters";
+import { IngredientCsvImport } from "@/components/ingredients/ingredient-csv-import";
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner, EmptyState } from "@/components/ui/empty-state";
 import type { IngredientWithMeta } from "@/types";
 
-export default function IngredientsPage() {
+function IngredientsContent() {
+  const searchParams = useSearchParams();
+  const initialCategory = searchParams.get("category") ?? "";
   const [ingredients, setIngredients] = useState<IngredientWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,26 +36,18 @@ export default function IngredientsPage() {
   );
 
   useEffect(() => {
-    fetchIngredients({ search: "", category: "", sortBy: "name", sortOrder: "asc" });
-  }, [fetchIngredients]);
+    fetchIngredients({
+      search: "",
+      category: initialCategory,
+      sortBy: "name",
+      sortOrder: "asc",
+    });
+  }, [fetchIngredients, initialCategory]);
 
   return (
-    <div>
-      <DashboardHeader
-        title="Ingredient Inventory"
-        description="Manage your teas, herbs, spices, and more"
-        action={
-          <AppLink href="/ingredients/new">
-            <Button>
-              <Plus className="h-4 w-4" />
-              Add ingredient
-            </Button>
-          </AppLink>
-        }
-      />
-
+    <>
       <div className="mb-6">
-        <SearchFilters onFilterChange={fetchIngredients} />
+        <SearchFilters initialCategory={initialCategory} onFilterChange={fetchIngredients} />
       </div>
 
       {loading ? (
@@ -74,6 +70,33 @@ export default function IngredientsPage() {
           ))}
         </div>
       )}
+    </>
+  );
+}
+
+export default function IngredientsPage() {
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  return (
+    <div>
+      <DashboardHeader
+        title="Ingredient Inventory"
+        description="Manage your teas, herbs, spices, and more"
+        action={
+          <div className="flex flex-wrap items-center gap-2">
+            <IngredientCsvImport onImported={() => setRefreshKey((k) => k + 1)} />
+            <AppLink href="/ingredients/new">
+              <Button>
+                <Plus className="h-4 w-4" />
+                Add ingredient
+              </Button>
+            </AppLink>
+          </div>
+        }
+      />
+      <Suspense fallback={<LoadingSpinner />}>
+        <IngredientsContent key={refreshKey} />
+      </Suspense>
     </div>
   );
 }

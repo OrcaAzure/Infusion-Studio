@@ -10,7 +10,7 @@ export const blendIngredientSchema = z.object({
 export const blendSchema = z.object({
   name: z.string().min(1, "Blend name is required").max(100),
   description: z.string().max(500).optional(),
-  brewTemp: z.coerce.number().min(50).max(100).optional(),
+  brewTemp: z.coerce.number().min(40).max(100).optional(),
   brewTime: z.coerce.number().min(30).max(3600).optional(),
   ingredients: z
     .array(blendIngredientSchema)

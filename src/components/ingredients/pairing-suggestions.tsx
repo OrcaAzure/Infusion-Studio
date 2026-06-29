@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppLink } from "@/components/ui/app-link";
+import { ingredientPath } from "@/lib/entity-path";
 import { motion } from "framer-motion";
 import { Sparkles, ArrowRight, FlaskConical } from "lucide-react";
 import { CategoryBadge } from "@/components/ui/badge";
@@ -96,7 +97,7 @@ function PairingRow({ pairing, index }: { pairing: PairingResult; index: number 
       transition={{ delay: index * 0.08 }}
     >
       <AppLink
-        href={`/ingredients/${ingredient.id}`}
+        href={ingredientPath(ingredient.id)}
         className="group block rounded-lg border border-stone-200 p-3 transition-all hover:border-emerald-300 hover:shadow-sm dark:border-stone-700 dark:hover:border-emerald-700"
         data-glow-color={GLOW_COLORS[ingredient.category]}
       >

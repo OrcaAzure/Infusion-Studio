@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { AppLink } from "@/components/ui/app-link";
+import { blendPath } from "@/lib/entity-path";
 import { Plus, FlaskConical } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { Card } from "@/components/ui/card";
@@ -67,7 +68,7 @@ export default function BlendsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {blends.map((blend) => (
-            <AppLink key={blend.id} href={`/blends/${blend.id}`}>
+            <AppLink key={blend.id} href={blendPath(blend.id)}>
               <Card hover className="h-full">
                 <h3 className="mb-1 font-semibold text-stone-900 dark:text-stone-100">
                   {blend.name}

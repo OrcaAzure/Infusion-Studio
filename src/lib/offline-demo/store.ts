@@ -5,29 +5,37 @@ import {
   DEMO_USER_ID,
   type DemoState,
 } from "./seed-data";
-
-const STORAGE_KEY = "infusion-studio-offline-demo";
+import { demoStorageGet, demoStorageSet } from "./preferences";
 
 let state: DemoState = createInitialDemoState();
 
+function normalizeState(raw: DemoState): DemoState {
+  return { ...raw, brewLogs: raw.brewLogs ?? [] };
+}
+
 function touch() {
   if (typeof window !== "undefined") {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    } catch {
-      /* quota / private mode */
-    }
+    void demoStorageSet(JSON.stringify(state));
   }
 }
 
 export function loadDemoState() {
   if (typeof window === "undefined") return;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) state = JSON.parse(raw) as DemoState;
+    const raw = localStorage.getItem("infusion-studio-offline-demo");
+    if (raw) state = normalizeState(JSON.parse(raw) as DemoState);
   } catch {
     state = createInitialDemoState();
   }
+  void demoStorageGet().then((raw) => {
+    if (raw) {
+      try {
+        state = normalizeState(JSON.parse(raw) as DemoState);
+      } catch {
+        /* keep prior */
+      }
+    }
+  });
 }
 
 export function resetDemoState() {
@@ -112,7 +120,7 @@ export const offlineStore = {
       totalRecipes: recipes.length,
       favoriteCount: favorites.length,
       lowStockItems: [...ingredients]
-        .filter((i) => i.quantity <= LOW_STOCK)
+        .filter((i) => i.quantity <= ((i as { lowStockThreshold?: number }).lowStockThreshold ?? 50))
         .sort((a, b) => a.quantity - b.quantity)
         .slice(0, 5),
       recentBlends: [...blends]
@@ -203,6 +211,8 @@ export const offlineStore = {
       quantity: Number(data.quantity ?? 0),
       unit: String(data.unit ?? "g"),
       pricePerUnit: data.pricePerUnit != null ? Number(data.pricePerUnit) : null,
+      lowStockThreshold:
+        data.lowStockThreshold != null ? Number(data.lowStockThreshold) : 50,
       imageUrl: (data.imageUrl as string) || null,
       userId: DEMO_USER_ID,
       createdAt: now,
@@ -242,6 +252,18 @@ export const offlineStore = {
     state.blendIngredients = state.blendIngredients.filter((bi) => bi.ingredientId !== id);
     touch();
     return true;
+  },
+
+  adjustStock(id: string, delta: number) {
+    const idx = state.ingredients.findIndex((i) => i.id === id);
+    if (idx < 0) return null;
+    state.ingredients[idx] = {
+      ...state.ingredients[idx],
+      quantity: Math.max(0, state.ingredients[idx].quantity + delta),
+      updatedAt: new Date().toISOString(),
+    };
+    touch();
+    return state.ingredients[idx];
   },
 
   getPairings(id: string) {
@@ -340,6 +362,7 @@ export const offlineStore = {
     state.blendIngredients = state.blendIngredients.filter((bi) => bi.blendId !== id);
     state.recipes = state.recipes.filter((r) => r.blendId !== id);
     state.favorites = state.favorites.filter((f) => f.blendId !== id);
+    state.brewLogs = state.brewLogs.filter((l) => l.blendId !== id);
     touch();
     return true;
   },
@@ -392,6 +415,9 @@ export const offlineStore = {
 
   deleteRecipe(id: string) {
     state.recipes = state.recipes.filter((r) => r.id !== id);
+    state.brewLogs = state.brewLogs.map((l) =>
+      l.recipeId === id ? { ...l, recipeId: null } : l
+    );
     touch();
     return true;
   },
@@ -466,5 +492,70 @@ export const offlineStore = {
     state.user.socialHandle = handle;
     touch();
     return { socialHandle: state.user.socialHandle, name: state.user.name };
+  },
+
+  listBrewLogs(params: URLSearchParams) {
+    const recipeId = params.get("recipeId");
+    const blendId = params.get("blendId");
+    let logs = state.brewLogs.filter((l) => l.userId === DEMO_USER_ID);
+    if (recipeId) logs = logs.filter((l) => l.recipeId === recipeId);
+    if (blendId) logs = logs.filter((l) => l.blendId === blendId);
+    return logs
+      .sort((a, b) => b.brewedAt.localeCompare(a.brewedAt))
+      .slice(0, 50)
+      .map((log) => {
+        const blend = blendById(log.blendId);
+        const recipe = log.recipeId ? recipeById(log.recipeId) : null;
+        return {
+          ...log,
+          blend: blend ? { id: blend.id, name: blend.name } : undefined,
+          recipe: recipe ? { id: recipe.id, name: recipe.name } : null,
+        };
+      });
+  },
+
+  createBrewLog(data: Record<string, unknown>) {
+    const blendId = String(data.blendId ?? "");
+    const recipeId = data.recipeId ? String(data.recipeId) : null;
+    if (!blendById(blendId)) return null;
+
+    if (recipeId && !recipeById(recipeId)) return null;
+
+    const brewedAt = data.brewedAt
+      ? new Date(String(data.brewedAt)).toISOString()
+      : new Date().toISOString();
+
+    const log = {
+      id: uid("log"),
+      notes: (data.notes as string) ?? null,
+      brewedAt,
+      userId: DEMO_USER_ID,
+      blendId,
+      recipeId,
+    };
+    state.brewLogs.push(log);
+
+    if (recipeId) {
+      const recipe = recipeById(recipeId);
+      if (recipe) {
+        recipe.brewCount += 1;
+        recipe.lastBrewed = brewedAt;
+        recipe.updatedAt = brewedAt;
+      }
+    }
+
+    touch();
+    const blend = blendById(blendId)!;
+    const recipe = recipeId ? recipeById(recipeId) : null;
+    return {
+      ...log,
+      blend: { id: blend.id, name: blend.name },
+      recipe: recipe ? { id: recipe.id, name: recipe.name } : null,
+    };
+  },
+
+  importIngredients(rows: Array<Record<string, unknown>>) {
+    const created = rows.map((data) => this.createIngredient(data));
+    return { imported: created.length, ingredients: created };
   },
 };

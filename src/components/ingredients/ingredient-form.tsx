@@ -13,12 +13,13 @@ import {
 } from "@/lib/validations/ingredient";
 import { CATEGORY_LABELS, parseFlavorNotes } from "@/lib/utils";
 import { appPath } from "@/lib/app-path";
+import { ingredientPath } from "@/lib/entity-path";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select } from "@/components/ui/select";
-import { StepperInput } from "@/components/ui/stepper-input";
-import { Modal } from "@/components/ui/modal";
+import { NumberInput } from "@/components/ui/number-input";
+import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { useToast } from "@/components/ui/toast";
 import type { Ingredient } from "@prisma/client";
 
@@ -26,6 +27,8 @@ interface IngredientFormProps {
   ingredient?: Ingredient;
   onSuccess?: () => void;
 }
+
+const ORIGIN_SUGGESTIONS = ["China", "Japan", "India", "Sri Lanka", "Taiwan", "Kenya", "Nepal"];
 
 export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
   const router = useRouter();
@@ -54,12 +57,14 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
           quantity: ingredient.quantity,
           unit: ingredient.unit,
           pricePerUnit: ingredient.pricePerUnit ?? undefined,
+          lowStockThreshold: ingredient.lowStockThreshold ?? 50,
           imageUrl: ingredient.imageUrl ?? "",
         }
       : {
           category: "TEA",
-          quantity: 100,
+          quantity: 0,
           unit: "g",
+          lowStockThreshold: 50,
           flavorNotes: [],
         },
   });
@@ -92,9 +97,7 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
     const saved = isEditing ? ingredient : await res.json();
     toast(isEditing ? "Changes saved" : "Ingredient added");
     onSuccess?.();
-    router.push(
-      appPath(isEditing ? `/ingredients/${ingredient.id}` : `/ingredients/${saved.id}`)
-    );
+    router.push(ingredientPath(isEditing ? ingredient.id : saved.id));
   };
 
   const handleCancel = () => {
@@ -141,23 +144,31 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
         />
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <Input
-            id="origin"
-            label="Origin"
-            placeholder="Japan"
-            error={errors.origin?.message}
-            {...register("origin")}
-          />
+          <div>
+            <Input
+              id="origin"
+              label="Origin"
+              placeholder="Japan"
+              list="origin-suggestions"
+              error={errors.origin?.message}
+              {...register("origin")}
+            />
+            <datalist id="origin-suggestions">
+              {ORIGIN_SUGGESTIONS.map((o) => (
+                <option key={o} value={o} />
+              ))}
+            </datalist>
+          </div>
           <Controller
             name="quantity"
             control={control}
             render={({ field }) => (
-              <StepperInput
+              <NumberInput
                 label="Quantity"
                 value={field.value}
                 onChange={field.onChange}
                 min={0}
-                step={5}
+                step={1}
               />
             )}
           />
@@ -169,6 +180,21 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
             {...register("unit")}
           />
         </div>
+
+        <Controller
+          name="lowStockThreshold"
+          control={control}
+          render={({ field }) => (
+            <NumberInput
+              label="Low stock alert threshold (optional)"
+              value={field.value ?? 50}
+              onChange={field.onChange}
+              min={1}
+              max={99999}
+              step={1}
+            />
+          )}
+        />
 
         <Input
           id="pricePerUnit"
@@ -213,7 +239,7 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
         </div>
 
         <div className="flex gap-3">
-          <Button type="submit" isLoading={isSubmitting}>
+          <Button type="submit" isLoading={isSubmitting} disabled={isEditing && !isDirty}>
             {isEditing ? "Save changes" : "Add ingredient"}
           </Button>
           <Button type="button" variant="outline" onClick={handleCancel}>
@@ -222,19 +248,16 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
         </div>
       </form>
 
-      <Modal isOpen={showCancelModal} onClose={() => setShowCancelModal(false)} title="Discard changes?">
-        <p className="mb-4 text-sm text-stone-600 dark:text-stone-400">
-          You have unsaved changes. Are you sure you want to leave?
-        </p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setShowCancelModal(false)}>
-            Keep editing
-          </Button>
-          <Button variant="destructive" onClick={() => router.back()}>
-            Discard
-          </Button>
-        </div>
-      </Modal>
+      <ConfirmModal
+        isOpen={showCancelModal}
+        title="Discard changes?"
+        message="You have unsaved changes. Are you sure you want to leave?"
+        confirmLabel="Discard"
+        cancelLabel="Keep editing"
+        variant="danger"
+        onCancel={() => setShowCancelModal(false)}
+        onConfirm={() => router.back()}
+      />
     </>
   );
 }

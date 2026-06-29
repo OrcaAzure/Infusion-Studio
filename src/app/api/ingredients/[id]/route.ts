@@ -67,7 +67,8 @@ export async function PUT(request: Request, context: RouteContext) {
     });
 
     return NextResponse.json(ingredient);
-  } catch {
+  } catch (err) {
+    console.error("[API ingredients PUT]", err);
     return NextResponse.json({ error: "Failed to update ingredient" }, { status: 500 });
   }
 }

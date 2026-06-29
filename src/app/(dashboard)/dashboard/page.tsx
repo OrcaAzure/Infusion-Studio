@@ -11,13 +11,14 @@ import {
   Package,
 } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
-import { StatCard, CategoryChart } from "@/components/dashboard/stats";
+import { StatCard, CategoryChart, lowStockSeverity, LOW_STOCK_STYLES } from "@/components/dashboard/stats";
 import { Card, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/ui/empty-state";
 import { CategoryBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AppLink } from "@/components/ui/app-link";
 import { formatCurrency, CATEGORY_LABELS } from "@/lib/utils";
+import { ingredientPath, blendPath } from "@/lib/entity-path";
 import type { DashboardStats } from "@/types";
 
 export default function DashboardPage() {
@@ -36,6 +37,7 @@ export default function DashboardPage() {
 
   const categoryData = stats.categoryBreakdown.map((c) => ({
     category: CATEGORY_LABELS[c.category] ?? c.category,
+    key: c.category,
     count: c.count,
   }));
 
@@ -52,15 +54,10 @@ export default function DashboardPage() {
       />
 
       <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-        <StatCard title="Ingredients" value={stats.totalIngredients} icon={Leaf} index={0} />
-        <StatCard title="Blends" value={stats.totalBlends} icon={FlaskConical} index={1} />
-        <StatCard title="Recipes" value={stats.totalRecipes} icon={BookOpen} index={2} />
-        <StatCard
-          title="Favorites"
-          value={stats.favoriteCount}
-          icon={Heart}
-          index={3}
-        />
+        <StatCard title="Ingredients" value={stats.totalIngredients} icon={Leaf} index={0} href="/ingredients" />
+        <StatCard title="Blends" value={stats.totalBlends} icon={FlaskConical} index={1} href="/blends" />
+        <StatCard title="Recipes" value={stats.totalRecipes} icon={BookOpen} index={2} href="/recipes" />
+        <StatCard title="Favorites" value={stats.favoriteCount} icon={Heart} index={3} href="/favorites" />
       </div>
 
       <Card className="mb-6">
@@ -74,18 +71,18 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-emerald-600" />
             Inventory value
           </div>
-          <p className="text-3xl font-bold text-stone-900 dark:text-stone-100">
+          <p className="max-w-full truncate text-3xl font-bold text-stone-900 dark:text-stone-100">
             {formatCurrency(stats.totalInventoryValue)}
           </p>
           <p className="mt-1 text-sm text-stone-500">Total stock value</p>
         </div>
 
-        <div className="mb-6">
+        <Card className="mb-6 rounded-lg border border-stone-200 bg-stone-50/50 p-4 dark:border-stone-700 dark:bg-stone-800/30">
           <h3 className="mb-3 text-sm font-semibold text-stone-700 dark:text-stone-300">
             By category
           </h3>
           <CategoryChart data={categoryData} />
-        </div>
+        </Card>
 
         <div>
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-stone-700 dark:text-stone-300">
@@ -94,11 +91,13 @@ export default function DashboardPage() {
           </h3>
           {stats.lowStockItems.length > 0 ? (
             <div className="space-y-2">
-              {stats.lowStockItems.map((item) => (
+              {stats.lowStockItems.map((item) => {
+                const severity = lowStockSeverity(item.quantity);
+                return (
                 <AppLink
                   key={item.id}
-                  href={`/ingredients/${item.id}`}
-                  className="flex min-w-0 items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:hover:bg-amber-900/30"
+                  href={ingredientPath(item.id)}
+                  className={`flex min-w-0 items-center justify-between gap-2 rounded-lg border p-3 transition-colors ${LOW_STOCK_STYLES[severity]}`}
                 >
                   <div className="min-w-0">
                     <p className="truncate font-medium text-stone-900 dark:text-stone-100">{item.name}</p>
@@ -108,7 +107,8 @@ export default function DashboardPage() {
                     {item.quantity} {item.unit}
                   </span>
                 </AppLink>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-sm text-stone-500">All ingredients are well stocked</p>
@@ -123,7 +123,7 @@ export default function DashboardPage() {
             {stats.recentBlends.map((blend) => (
               <AppLink
                 key={blend.id}
-                href={`/blends/${blend.id}`}
+                href={blendPath(blend.id)}
                 className="flex items-center justify-between rounded-lg border border-stone-200 p-3 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:hover:bg-stone-800"
               >
                 <div>

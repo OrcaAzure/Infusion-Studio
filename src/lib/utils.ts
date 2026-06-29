@@ -13,11 +13,17 @@ export function formatTime(seconds: number): string {
   return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
-/** Format currency values */
+/** Format currency values — compact notation for very large amounts */
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
+  const locale =
+    typeof navigator !== "undefined" ? navigator.language : "en-US";
+  const currency = process.env.NEXT_PUBLIC_CURRENCY ?? "USD";
+  const useCompact = Math.abs(amount) >= 1_000_000;
+
+  return new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "USD",
+    currency,
+    ...(useCompact ? { notation: "compact", maximumFractionDigits: 2 } : {}),
   }).format(amount);
 }
 

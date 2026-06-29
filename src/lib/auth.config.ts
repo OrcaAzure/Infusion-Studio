@@ -4,6 +4,14 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations/auth";
 
+if (
+  process.env.SKIP_AUTH === "true" &&
+  process.env.NODE_ENV === "production" &&
+  process.env.NEXT_PHASE !== "phase-production-build"
+) {
+  throw new Error("SKIP_AUTH must not be set in production");
+}
+
 export const authConfig: NextAuthConfig = {
   pages: {
     signIn: "/login",

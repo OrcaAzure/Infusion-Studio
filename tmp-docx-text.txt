@@ -1,0 +1,237 @@
+Infusion Studio
+Bug Fixes & Feature Prompts for Cursor
+QA tester feedback + code review findings, merged and ready to prompt
+Source legend
+QA
+DEV
+BOTH
+QA = tester-reported  |  DEV = code review  |  BOTH = flagged by both
+1. Routing & auth bugs  ⚠️  Fix these first
+Multiple pages redirect to the login page for items the logged-in user created. Root cause: the session is not being passed correctly through client-side fetches, or the route protection middleware is over-broad.
+Source
+Issue / Finding
+Fix / Implementation
+Ensure /api/ingredients/[id] and /api/blends/[id] check session via getSessionUser() and return 401, not a redirect. On the client, intercept 401 and push to /login only — don't let Next.js middleware redirect mid-page.
+QA
+Clicking a low-stock ingredient (that I added) on the dashboard redirects to login page.
+Same root fix as above. Verify AppLink uses appPath() correctly and that the blendId is not undefined when the link renders.
+QA
+Clicking a recent blend on the dashboard redirects to login page.
+Likely a userId mismatch. Check prisma.ingredient.findUnique includes where: { id, userId } and that getSessionUser() returns the correct id on all client pages.
+QA
+Clicking any ingredient I added from the Ingredients list page redirects to login. Pre-seeded ingredients work fine.
+The POST /api/ingredients route must call getSessionUser() at the top and return 401 if missing — verify it does and that the form is not submitting before the session is hydrated.
+QA
+Clicking Add ingredient button redirects to login.
+The handleSave() fetch in blend-creator.tsx receives a non-ok response and router.push fires on a failed save. Add proper error handling: only redirect on res.ok, show an error toast on failure.
+QA
+Save blend button in Blend Creator redirects to Landing/Login page.
+2. General UI & layout
+Source
+Issue / Finding
+Fix / Implementation
+Reduce the paddingTop in DashboardHeader from max(2.75rem, calc(env(safe-area-inset-top) + 2rem)) to max(2rem, calc(env(safe-area-inset-top) + 1.25rem)) — it is over-generous on most devices.
+QA
+Top margin/padding at tab titles is too much on mobile.
+Add pr-3 or pr-4 to the select/dropdown components in search-filters.tsx and any other select elements.
+QA
+Dropdown buttons need right padding.
+Replace the Droplets lucide icon in sidebar.tsx with <Image src='/icons/icon-192.png' width={40} height={40} alt='Infusion Studio' className='rounded-xl' />. Requires next/image import.
+QA
+Sidebar: change the Droplets icon beside the app title to the actual logo image.
+Create a reusable <ConfirmModal> component. Replace all confirm() calls in blend detail, ingredient detail, and recipes page with this modal. The <Modal> component already exists — just add confirmText, cancelText, and onConfirm props.
+DEV
+browser confirm() dialogs are used for all delete confirmations — breaks on Android WebView and looks wrong in a polished app.
+Accept a locale/currency prop or read from user settings. For now, change to use the browser's navigator.language and a configurable currency env var.
+DEV
+formatCurrency is hardcoded to en-US / USD.
+3. Dashboard
+Source
+Issue / Finding
+Fix / Implementation
+Wrap each StatCard in an AppLink: /ingredients, /blends, /recipes, /favorites. Add hover styles to make them feel interactive.
+QA
+First 4 stat cards (Ingredients, Blends, Recipes, Favorites) are not clickable — they should navigate to the relevant tab.
+Format with Intl.NumberFormat compact notation for values over 1,000,000 (e.g. $9.99T). Add a max-w-full truncate on the value element as a fallback.
+QA
+Inventory Value: entering a price like 9999999999999 causes the value to overflow the card.
+Wrap the CategoryChart section in a <Card> component matching the Inventory Value card style.
+QA
+By Category chart is not in a Card like Inventory Value — inconsistent layout.
+Add tiered colouring: quantity <= 10 → red border + bg-red-50, quantity 11-18 → amber (current), quantity 19-50 → keep as is. Update the LOW_STOCK_THRESHOLD logic in dashboard route and pass a severity prop to the alert list item.
+QA
+Low Stock Alert: no differentiation between severity levels — all look the same.
+In sidebar.tsx, reorder mainNavItems so Timer comes immediately after /blends/create.
+QA
+Sidebar: Brew Timer should be placed after Blend Creator in the nav order.
+Add a lowStockThreshold field to the Ingredient model (default 50). Show it in the ingredient edit form as an optional field. Use ingredient.lowStockThreshold ?? 50 in the dashboard query.
+DEV
+Low stock threshold is hardcoded at 50 in the API route — wrong for ingredients tracked in pieces or bags.
+4. Ingredients
+Source
+Issue / Finding
+Fix / Implementation
+Wrap the last two filter controls in a <div className='flex gap-2'> with a divider or label above them — e.g. a small 'Sort' label. Update search-filters.tsx layout.
+QA
+Filter buttons: last 2 buttons (Sort By, Sort Order) should be grouped visually.
+Add a datalist or combobox to the origin input with common tea/herb origin countries (China, Japan, India, Sri Lanka, etc.). Keep it a free-text input with suggestions, not a strict dropdown.
+QA
+Origin field: could benefit from a country dropdown.
+Replace the stepper with a NumberInput (already exists) or allow the StepperInput to use step=1. Set default quantity to 0. Add a direct text input alongside or as the primary control.
+QA
+Quantity: stepper only increments by 5. Should be editable directly. Default value too high.
+Track a isDirty state using react-hook-form's formState.isDirty. Disable the Save button when !isDirty.
+QA
+Save button on edit page: should be disabled if no changes have been made.
+Show a <ConfirmModal> when the user clicks Cancel and isDirty is true. If no changes, navigate away immediately.
+QA
+Cancel button on edit page: should show a confirmation modal before discarding changes.
+Add +/- buttons to the ingredient detail page for a quick stock adjustment. POST to a new /api/ingredients/[id]/stock route that accepts { delta: number } and applies it with prisma.ingredient.update({ data: { quantity: { increment: delta } } }).
+DEV
+Quick stock update is missing — users must go through full edit to decrement quantity.
+5. My Blends — detail view
+Source
+Issue / Finding
+Fix / Implementation
+Restructure DashboardHeader action area: place Favorite and Save Recipe as icon-only buttons inline with the title. Use a two-column layout: [icon + title + description] [fav | save] on the same row.
+QA
+Favorite and Save Recipe buttons should be repositioned next to the blend title, not below it.
+Move the Brew/Start Timer button to the bottom of the page, below the ingredients card. Keep Edit and Delete in the header.
+QA
+Brew button should be at the bottom so the user reads ingredient details before brewing.
+Add the recipeSchema Zod validation (already defined in validations/blend.ts) to the save recipe modal form. Show inline error if name exceeds 100 chars.
+QA
+Save as Recipe has no validation — names of 500+ characters are accepted.
+Call useBlendStore.getState().reset() when the user cancels edit and navigates away. Add a useEffect cleanup in the edit page component that resets the store on unmount only if the save did not complete.
+QA
+After cancelling a blend edit and navigating away, the Blend Creator still retains the edited blend data.
+6. Blend Creator
+Source
+Issue / Finding
+Fix / Implementation
+Move the Input for blend name and Textarea for description above the Ingredient Palette card, as a full-width section at the top of the grid. Currently they are inside the right column.
+QA
+Blend Name field should be at the very top of the creator, above the canvas.
+The blendSchema already has .max(100) — wire it to the form. Show a character counter and error below the input when over limit.
+QA
+Blend Name has no character limit validation — 500+ chars accepted.
+Same as above — blendSchema has .max(500). Wire it up with a visible counter.
+QA
+Description has no character limit validation — 500+ chars accepted.
+Add a unit toggle next to Brew Temp (°C / °F) and Brew Time (seconds / minutes). Store internally in °C and seconds, convert on display.
+QA
+Brew Temp and Brew Time have no unit options — only °C and seconds.
+Add a Back button (AppLink to /blends) and a Reset button (already exists). The Reset should trigger the ConfirmModal if items.length > 0.
+QA
+No Cancel or Back button in the Blend Creator.
+Replace the two NumberInput components for brewTemp and brewTime with StepperInput. Set step=1 for time, step=5 for temp with min=40 max=100.
+DEV
+StepperInput component exists but is not used for Brew Temp/Time — NumberInput is used instead, which is worse on mobile.
+7. Recipes
+Source
+Issue / Finding
+Fix / Implementation
+Make the entire recipe Card a clickable element that opens a detail view or at minimum expands inline to show full notes, ingredients, and actions. Consider a slide-over or navigate to /recipes/[id].
+QA
+Clicking on a recipe card does nothing — user has to find and click the Brew button specifically.
+Add an edit icon on each recipe card that opens a small inline form (or modal) to update rating and notes without leaving the list.
+DEV
+No inline rating or notes editing from the recipes list — requires navigating into each recipe.
+8. Brew Timer
+Source
+Issue / Finding
+Fix / Implementation
+Install @capacitor/haptics. On isComplete, call Haptics.vibrate({ duration: 1000 }). Also play a short chime using the Web Audio API (AudioContext + oscillator) as a fallback for PWA. Wrap in a try/catch.
+QA
+No sound or vibration when timer completes — notification only works when app is in foreground.
+Reorder the timer page layout: Custom Duration card first, then Quick Presets below it.
+QA
+Custom Duration input should be above Quick Presets, not below.
+Replace the NumberInput + Set button with either: (a) a StepperInput for minutes with a seconds row below, or (b) a HH:MM:SS masked text input. Option (b) is more flexible — use three NumberInput fields side by side (HH / MM / SS) that compute total seconds on change.
+QA
+Custom Duration should be a stepper or HH:MM:SS format input, not a plain minutes number input.
+If using three-field HH:MM:SS approach, this is solved. Alternatively add a unit selector (minutes / seconds / hours) next to the input.
+QA
+Custom Duration should support other time units, not just minutes.
+Install @capacitor/local-notifications. Schedule a local notification when the timer starts: LocalNotifications.schedule({ notifications: [{ title: 'Brew complete', body: blendName, id: 1, schedule: { at: new Date(Date.now() + seconds * 1000) } }] }). Cancel it on reset.
+DEV
+Web Notification only fires when the app is in foreground — useless on Android when screen is locked.
+9. API & backend fixes
+Source
+Issue / Finding
+Fix / Implementation
+Add take: 20 and a cursor-based pagination param to the community findMany query. Accept ?cursor=<id> and return nextCursor in the response.
+DEV
+/api/discover community query has no pagination limit — fetches all shared recipes.
+Add console.error(err) before every NextResponse.json({ error: ... }, { status: 500 }) return. For production, replace with a proper logger or Sentry integration.
+DEV
+API route catch blocks swallow errors silently — no logging.
+Add: if (process.env.NODE_ENV === 'production' && process.env.SKIP_AUTH === 'true') { throw new Error('SKIP_AUTH must not be set in production') } at the top of auth.config.ts.
+DEV
+SKIP_AUTH=true env var completely bypasses auth with no production guard.
+Update schema.prisma provider to postgresql for production. Keep a separate .env.development with a SQLite URL if needed for local dev. Document both in README.
+DEV
+Prisma schema declares provider = sqlite but README says PostgreSQL.
+Add lowStockThreshold Int? to the Ingredient model. Run prisma migrate dev. Use it in the dashboard API route and expose it in the ingredient form.
+DEV
+Prisma schema does not have a lowStockThreshold field on Ingredient.
+10. Offline APK improvements
+Source
+Issue / Finding
+Fix / Implementation
+Install @capacitor/preferences. In offline-demo/store.ts replace localStorage.setItem/getItem with Preferences.set/get. This persists across full app restarts.
+DEV
+Offline demo state resets on app restart — localStorage is unreliable across Capacitor restarts on Android.
+Change the banner from a fixed bottom bar to a small pill that auto-hides after 4 seconds using a setTimeout + opacity transition. It should reappear briefly when navigating pages.
+DEV
+Offline demo banner is a fixed bar that competes with the nav area and content.
+When a user tries to share a recipe or export data in demo mode, show a modal: 'Create a free account to save your blends permanently' with a Sign up button linking to the live web app URL.
+DEV
+No sign-up CTA moments in the offline APK — user has no prompt to create a real account.
+Add 3-5 pre-seeded brew session entries to seed-data.ts with realistic timestamps, blend names, and notes. This makes the timer and log features immediately understandable.
+DEV
+Seed data has no brew history — the brew log feature is invisible on first launch.
+Add a one-time tooltip tour on first launch (persisted via Preferences). Highlight: Ingredients → Blend Creator → Timer. Keep it to 3 steps max.
+DEV
+No onboarding for first-time APK users.
+11. New features to add
+Source
+Issue / Finding
+Fix / Implementation
+Add a BrewLog model: id, userId, recipeId (optional), blendId, notes, brewedAt. When the timer completes, prompt: 'Log this brew?' with optional quick note. Show log on recipe detail page.
+DEV
+No brew log — brewCount increments but there is no record of when/what was brewed.
+Add a CSV import button on the Ingredients page. Parse with papaparse (already in package.json). Map columns: name, category, quantity, unit, pricePerUnit. Show a preview table before importing.
+DEV
+No batch ingredient import.
+Make each category bar/segment clickable. On click, navigate to /ingredients?category=TEA (or whichever was tapped). The ingredient list already supports the category filter param.
+DEV
+Category chart on dashboard is static and not interactive.
+Add navigation to a /recipes/[id] detail page, or make the card open a slide-over drawer with full recipe info, brew history, and edit controls.
+DEV
+Recipe page: individual recipe cards are not clickable as a whole.
+Add a small info tooltip on each canvas ingredient showing common unit equivalents (e.g. 1 tsp ≈ 2.5g for tea). Alternatively add a unit toggle on the CanvasItem that converts the amount on the fly.
+DEV
+Unit converter missing in blend creator — g and tsp are not comparable.
+Add a thin progress bar at the bottom of each IngredientCard showing quantity / (lowStockThreshold * 3) clamped to 100%. Colour: green > 60%, amber 30-60%, red < 30%.
+DEV
+Stock level has no visual indicator on ingredient cards.
+12. Ready-to-paste Cursor prompts
+Copy each block below and paste directly into Cursor. Each prompt is self-contained.
+Prompt 1 — Fix all routing/auth redirect bugs
+In Infusion Studio, multiple pages redirect to /login when a logged-in user clicks on items they created (ingredients, blends, low-stock alerts on dashboard). Audit every client-side fetch in src/app/(dashboard) and every API route in src/app/api. Ensure: (1) every API route calls getSessionUser() at the top and returns { error: 'Unauthorized' } with status 401 — never a redirect; (2) client pages handle a 401 response by calling router.push('/login') themselves rather than relying on middleware; (3) AppLink components always have a defined href before rendering. Fix the blend creator save button which incorrectly redirects to the landing page on a failed save — it should show an error toast instead.
+Prompt 2 — Dashboard improvements
+In src/app/(dashboard)/dashboard/page.tsx and src/app/api/dashboard/route.ts: (1) Make the 4 stat cards (Ingredients, Blends, Recipes, Favorites) clickable — wrap each in AppLink to /ingredients, /blends, /recipes, /favorites; (2) Fix inventory value overflow when price is very large — use Intl.NumberFormat with notation:'compact' for values over 999999; (3) Wrap the CategoryChart in a Card component matching the Inventory Value card; (4) Add tiered low-stock colouring: quantity <= 10 = red (border-red-300 bg-red-50), quantity 11-18 = amber (current), 19-50 = unchanged; (5) In sidebar.tsx reorder mainNavItems so Timer appears immediately after Blend Creator; (6) In the API route replace the hardcoded LOW_STOCK_THRESHOLD=50 with ingredient.lowStockThreshold ?? 50 (add that field to the Prisma schema first).
+Prompt 3 — Ingredient page fixes
+In src/components/ingredients/ingredient-form.tsx and related pages: (1) Group the Sort By and Sort Order filter controls in search-filters.tsx under a shared 'Sort' label with a flex gap-2 wrapper; (2) Add a datalist to the origin input with common tea origins (China, Japan, India, Sri Lanka, Taiwan, Kenya, Nepal); (3) Replace the quantity stepper with NumberInput (step=1, default=0) or fix StepperInput to allow step=1; (4) Add isDirty from react-hook-form formState to disable the Save button when no changes have been made; (5) Show a ConfirmModal when Cancel is clicked and isDirty is true — 'Discard changes?'; (6) Add a quick stock adjustment UI to the ingredient detail page: two buttons (Use some / Restock) that open a small modal with a NumberInput and call POST /api/ingredients/[id]/stock with { delta: number }. Create that new API route.
+Prompt 4 — Blend Creator & detail fixes
+In src/components/blends/blend-creator.tsx and src/app/(dashboard)/blends/[id]/page.tsx: (1) Move the blend name Input and description Textarea above the two-column palette/canvas grid so they are full-width at the top; (2) Wire the existing blendSchema .max(100) and .max(500) Zod limits to the form — show character counters and inline error messages; (3) Replace the two NumberInput components for brewTemp and brewTime with StepperInput (step=5 for temp 40-100°C, step=30 for time 30-3600s); (4) Add unit toggles: °C/°F for temp, sec/min for time — store in °C and seconds internally; (5) Add a Back AppLink to /blends alongside the Reset button; (6) On the blend detail page move the Brew/Start Timer button to below the ingredients Card; (7) In the Save as Recipe modal add validation using recipeSchema — show error if name > 100 chars; (8) On edit page unmount, call useBlendStore.getState().reset() only if save did not complete, to prevent stale blend data persisting in the creator.
+Prompt 5 — Brew timer improvements
+In src/app/(dashboard)/timer/page.tsx and src/components/timer/brew-timer.tsx: (1) Reorder the timer page so Custom Duration appears above Quick Presets; (2) Replace the single minutes NumberInput with three side-by-side NumberInput fields (HH / MM / SS) that compute seconds = h*3600 + m*60 + s on change; (3) When the timer completes (isComplete), call Haptics.vibrate({ duration: 1500 }) from @capacitor/haptics (install it) and play a soft chime using Web Audio API as a PWA fallback; (4) Install @capacitor/local-notifications and schedule a local notification when the timer starts: fire at Date.now() + seconds*1000 with title 'Brew Complete' and body = blendName. Cancel the notification on reset. This ensures the alert works even when the screen is locked.
+Prompt 6 — Replace all confirm() dialogs
+Create a new component src/components/ui/confirm-modal.tsx that wraps the existing Modal component and accepts: title: string, message: string, confirmLabel?: string, cancelLabel?: string, onConfirm: () => void, onCancel: () => void, isOpen: boolean, variant?: 'danger' | 'default'. The confirm button should use variant='destructive' for danger. Then replace every instance of confirm() in the codebase (blend detail handleDelete, ingredient detail handleDelete, recipes handleDelete, ingredient edit cancel) with this ConfirmModal. The modal should be animated using the existing Framer Motion setup.
+Prompt 7 — Offline APK persistence & UX
+In src/lib/offline-demo/store.ts: (1) Install @capacitor/preferences. Replace localStorage.setItem/getItem/removeItem in the touch() and loadDemoState() functions with Preferences.set/get from @capacitor/preferences — wrap in isOfflineDemo() checks so the web version still uses localStorage; (2) In src/components/providers/offline-demo-provider.tsx change the fixed bottom banner to a pill that fades in for 3 seconds on mount then fades out — use a useEffect with setTimeout and CSS opacity transition; (3) Add 3-5 pre-seeded brew log entries to src/lib/offline-demo/seed-data.ts with realistic timestamps (2-3 days ago, 1 week ago etc.) and blend names from the existing seed blends; (4) When a user in demo mode tries to share a recipe or access any feature requiring a real account, show a modal: 'Create a free account to save your data permanently' with a Sign Up button.
+Prompt 8 — Logo in sidebar, general polish
+Polish pass across Infusion Studio: (1) In sidebar.tsx replace the Droplets lucide icon in the app header with next/image rendering /icons/icon-192.png at 40x40 with className='rounded-xl'; (2) Reduce the paddingTop in DashboardHeader from max(2.75rem, calc(env(safe-area-inset-top) + 2rem)) to max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem)); (3) Add pr-3 to all select/dropdown trigger elements in search-filters.tsx; (4) In the recipe cards on /recipes, make the entire Card clickable (or add a chevron icon) and show a detail drawer or navigate to a /recipes/[id] route; (5) In auth.config.ts add a production guard: if (process.env.NODE_ENV === 'production' && process.env.SKIP_AUTH === 'true') throw new Error('SKIP_AUTH cannot be true in production'); (6) Add console.error(err) before every 500 response in all API route catch blocks.
+Infusion Studio  ·  QA + Dev Review  ·  8 Cursor prompts ready to paste

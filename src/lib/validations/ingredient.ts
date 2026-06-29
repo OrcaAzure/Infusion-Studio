@@ -19,6 +19,7 @@ export const ingredientSchema = z.object({
   flavorNotes: z.array(z.string()),
   quantity: z.coerce.number().min(0, "Quantity cannot be negative"),
   unit: z.string().min(1),
+  lowStockThreshold: z.coerce.number().min(1).max(99999).optional(),
   pricePerUnit: z.coerce.number().min(0).optional(),
   imageUrl: z.string().url().optional().or(z.literal("")),
 });

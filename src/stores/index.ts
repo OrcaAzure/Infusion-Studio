@@ -76,7 +76,14 @@ interface TimerState {
   isRunning: boolean;
   isComplete: boolean;
   blendName: string;
-  setDuration: (seconds: number, blendName?: string) => void;
+  blendId: string | null;
+  recipeId: string | null;
+  setDuration: (
+    seconds: number,
+    blendName?: string,
+    context?: { blendId?: string; recipeId?: string }
+  ) => void;
+  clearBrewContext: () => void;
   start: () => void;
   pause: () => void;
   reset: () => void;
@@ -89,8 +96,19 @@ export const useTimerStore = create<TimerState>()((set) => ({
   isRunning: false,
   isComplete: false,
   blendName: "",
-  setDuration: (seconds, blendName = "") =>
-    set({ seconds, initialSeconds: seconds, isComplete: false, isRunning: false, blendName }),
+  blendId: null,
+  recipeId: null,
+  setDuration: (seconds, blendName = "", context) =>
+    set({
+      seconds,
+      initialSeconds: seconds,
+      isComplete: false,
+      isRunning: false,
+      blendName,
+      blendId: context?.blendId ?? null,
+      recipeId: context?.recipeId ?? null,
+    }),
+  clearBrewContext: () => set({ blendId: null, recipeId: null }),
   start: () => set({ isRunning: true, isComplete: false }),
   pause: () => set({ isRunning: false }),
   reset: () =>

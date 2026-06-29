@@ -1,11 +1,12 @@
 "use client";
 
 import { AppLink } from "@/components/ui/app-link";
+import { ingredientPath } from "@/lib/entity-path";
 import { motion } from "framer-motion";
 import { Package, ArrowRight } from "lucide-react";
 import { CategoryBadge, StatusBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { parseFlavorNotes } from "@/lib/utils";
+import { cn, parseFlavorNotes } from "@/lib/utils";
 import type { IngredientWithMeta } from "@/types";
 
 interface IngredientCardProps {
@@ -13,8 +14,21 @@ interface IngredientCardProps {
   index?: number;
 }
 
+function stockLevelPercent(quantity: number, threshold: number) {
+  const cap = threshold * 3;
+  return Math.min(100, Math.round((quantity / cap) * 100));
+}
+
+function stockBarColor(percent: number) {
+  if (percent > 60) return "bg-emerald-500";
+  if (percent > 30) return "bg-amber-500";
+  return "bg-red-500";
+}
+
 export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
-  const isLowStock = ingredient.quantity <= 50;
+  const threshold = ingredient.lowStockThreshold ?? 50;
+  const isLowStock = ingredient.quantity <= threshold;
+  const stockPct = stockLevelPercent(ingredient.quantity, threshold);
 
   const notes = parseFlavorNotes(ingredient.flavorNotes);
 
@@ -24,7 +38,7 @@ export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05 }}
     >
-      <AppLink href={`/ingredients/${ingredient.id}`}>
+      <AppLink href={ingredientPath(ingredient.id)}>
         <Card hover className="group h-full min-w-0">
           <div className="mb-3 flex items-start justify-between gap-2">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400">
@@ -42,6 +56,19 @@ export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
               {ingredient.description}
             </p>
           )}
+
+          <div className="mb-2">
+            <div className="mb-1 flex items-center justify-between text-xs text-stone-500">
+              <span>Stock level</span>
+              <span>{stockPct}%</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800">
+              <div
+                className={cn("h-full rounded-full transition-all", stockBarColor(stockPct))}
+                style={{ width: `${stockPct}%` }}
+              />
+            </div>
+          </div>
 
           <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
             <div className="flex min-w-0 flex-wrap items-center gap-2">

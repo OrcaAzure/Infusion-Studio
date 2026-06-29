@@ -45,3 +45,13 @@ export interface BlendCanvasItem {
   order: number;
   flavorNotes: string[];
 }
+
+export type BrewLogEntry = {
+  id: string;
+  notes: string | null;
+  brewedAt: string;
+  blendId: string;
+  recipeId: string | null;
+  blend?: { id: string; name: string };
+  recipe?: { id: string; name: string } | null;
+};

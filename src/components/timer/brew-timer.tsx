@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, RotateCcw, Bell } from "lucide-react";
 import { useTimerStore } from "@/stores";
 import { formatTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { BrewLogPrompt } from "@/components/timer/brew-log-prompt";
+import {
+  playBrewChime,
+  vibrateOnComplete,
+  scheduleBrewNotification,
+  cancelBrewNotification,
+} from "@/lib/timer-alerts";
 
 export function BrewTimer() {
   const {
@@ -15,13 +22,16 @@ export function BrewTimer() {
     isRunning,
     isComplete,
     blendName,
+    blendId,
     start,
     pause,
     reset,
     tick,
   } = useTimerStore();
 
+  const [showLogPrompt, setShowLogPrompt] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const alertedRef = useRef(false);
 
   useEffect(() => {
     if (isRunning) {
@@ -33,20 +43,44 @@ export function BrewTimer() {
   }, [isRunning, tick]);
 
   useEffect(() => {
-    if (isComplete && "Notification" in window) {
-      if (Notification.permission === "granted") {
-        new Notification("Brew Complete!", {
-          body: blendName ? `${blendName} is ready to enjoy` : "Your infusion is ready",
-        });
-      }
+    if (!isComplete) {
+      alertedRef.current = false;
+      setShowLogPrompt(false);
+      return;
     }
-  }, [isComplete, blendName]);
+    if (alertedRef.current) return;
+    alertedRef.current = true;
+
+    vibrateOnComplete();
+    playBrewChime();
+
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification("Brew Complete!", {
+        body: blendName ? `${blendName} is ready to enjoy` : "Your infusion is ready",
+      });
+    }
+
+    if (blendId) {
+      setShowLogPrompt(true);
+    }
+  }, [isComplete, blendName, blendId]);
 
   const requestNotification = useCallback(() => {
     if ("Notification" in window && Notification.permission === "default") {
       Notification.requestPermission();
     }
   }, []);
+
+  const handleStart = () => {
+    requestNotification();
+    scheduleBrewNotification(seconds, blendName);
+    start();
+  };
+
+  const handleReset = () => {
+    cancelBrewNotification();
+    reset();
+  };
 
   const progress = initialSeconds > 0 ? ((initialSeconds - seconds) / initialSeconds) * 100 : 0;
   const circumference = 2 * Math.PI * 120;
@@ -112,7 +146,7 @@ export function BrewTimer() {
 
       <div className="flex justify-center gap-3">
         {!isRunning && !isComplete && (
-          <Button size="lg" onClick={() => { requestNotification(); start(); }}>
+          <Button size="lg" onClick={handleStart}>
             <Play className="h-5 w-5" />
             Start
           </Button>
@@ -123,11 +157,13 @@ export function BrewTimer() {
             Pause
           </Button>
         )}
-        <Button size="lg" variant="outline" onClick={reset}>
+        <Button size="lg" variant="outline" onClick={handleReset}>
           <RotateCcw className="h-5 w-5" />
           Reset
         </Button>
       </div>
+
+      <BrewLogPrompt isOpen={showLogPrompt} onClose={() => setShowLogPrompt(false)} />
     </Card>
   );
 }

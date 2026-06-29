@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import {
@@ -29,9 +30,9 @@ const mainNavItems: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/ingredients", label: "Ingredients", icon: Leaf },
   { href: "/blends", label: "My Blends", icon: Droplets },
   { href: "/blends/create", label: "Blend Creator", icon: FlaskConical },
+  { href: "/timer", label: "Brew Timer", icon: Timer },
   { href: "/recipes", label: "Recipes", icon: BookOpen },
   { href: "/favorites", label: "Favorites", icon: Heart },
-  { href: "/timer", label: "Brew Timer", icon: Timer },
 ];
 
 const promoNavItems: { href: string; label: string; icon: LucideIcon }[] = [
@@ -76,9 +77,13 @@ export function Sidebar() {
   const NavContent = () => (
     <>
       <div className="mb-8 flex items-center gap-3 px-2 pt-[env(safe-area-inset-top)] lg:pt-0">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
-          <Droplets className="h-5 w-5" />
-        </div>
+        <Image
+          src="/icons/icon-192.png"
+          width={40}
+          height={40}
+          alt="Infusion Studio"
+          className="rounded-xl"
+        />
         <div>
           <h1 className="text-lg font-bold text-stone-900 dark:text-stone-100">Infusion Studio</h1>
           <p className="text-xs text-stone-500">Craft perfect blends</p>
@@ -163,7 +168,7 @@ export function DashboardHeader({
     <div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
       <div
         className="min-w-0 flex-1"
-        style={{ paddingTop: "max(2.75rem, calc(env(safe-area-inset-top) + 2rem))" }}
+        style={{ paddingTop: "max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem))" }}
       >
         <div className="flex items-start gap-3">
           {Icon && (

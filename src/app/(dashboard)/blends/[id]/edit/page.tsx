@@ -39,6 +39,10 @@ export default function EditBlendPage() {
       });
       setLoading(false);
     });
+
+    return () => {
+      useBlendStore.getState().reset();
+    };
   }, [id, loadBlend]);
 
   return (

@@ -11,6 +11,7 @@ import { AppLink } from "@/components/ui/app-link";
 import { LoadingSpinner, EmptyState } from "@/components/ui/empty-state";
 import { useTimerStore } from "@/stores";
 import { appPath } from "@/lib/app-path";
+import { blendPath } from "@/lib/entity-path";
 import type { FavoriteWithBlend } from "@/types";
 
 export default function FavoritesPage() {
@@ -36,7 +37,7 @@ export default function FavoritesPage() {
   };
 
   const startBrew = (fav: FavoriteWithBlend) => {
-    setDuration(fav.blend.brewTime ?? 300, fav.blend.name);
+    setDuration(fav.blend.brewTime ?? 300, fav.blend.name, { blendId: fav.blend.id });
     router.push(appPath("/timer"));
   };
 
@@ -67,7 +68,7 @@ export default function FavoritesPage() {
                 <Heart className="h-5 w-5 fill-current" />
               </button>
 
-              <AppLink href={`/blends/${fav.blend.id}`}>
+              <AppLink href={blendPath(fav.blend.id)}>
                 <h3 className="mb-1 pr-8 font-semibold text-stone-900 dark:text-stone-100">
                   {fav.blend.name}
                 </h3>

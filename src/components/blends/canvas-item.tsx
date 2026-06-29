@@ -1,12 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, X } from "lucide-react";
+import { GripVertical, X, ArrowLeftRight } from "lucide-react";
 import { CategoryBadge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  alternateUnit,
+  convertAmount,
+  isConvertibleUnit,
+  unitHint,
+  type ConvertibleUnit,
+} from "@/lib/unit-convert";
 import type { BlendCanvasItem } from "@/types";
 
 interface CanvasItemProps {
@@ -17,6 +25,15 @@ interface CanvasItemProps {
 
 /** Canvas item — sortable blend ingredient with amount control */
 export function CanvasItem({ item, onAmountChange, onRemove }: CanvasItemProps) {
+  const [displayUnit, setDisplayUnit] = useState(item.unit);
+  const alt = alternateUnit(item.unit);
+  const showConverter = alt !== null && isConvertibleUnit(item.unit);
+
+  const displayAmount =
+    showConverter && displayUnit !== item.unit && isConvertibleUnit(displayUnit)
+      ? convertAmount(item.amount, item.unit as ConvertibleUnit, displayUnit)
+      : item.amount;
+
   const {
     attributes,
     listeners,
@@ -30,6 +47,11 @@ export function CanvasItem({ item, onAmountChange, onRemove }: CanvasItemProps) 
     transform: CSS.Transform.toString(transform),
     transition,
     ...(isDragging ? { touchAction: "none" as const } : {}),
+  };
+
+  const toggleUnit = () => {
+    if (!alt) return;
+    setDisplayUnit(displayUnit === item.unit ? alt : item.unit);
   };
 
   return (
@@ -78,7 +100,7 @@ export function CanvasItem({ item, onAmountChange, onRemove }: CanvasItemProps) 
         </Button>
       </div>
 
-      <div className="mt-2 flex items-center gap-2 pl-6">
+      <div className="mt-2 flex flex-wrap items-center gap-2 pl-6">
         <Input
           type="number"
           step="0.1"
@@ -87,7 +109,22 @@ export function CanvasItem({ item, onAmountChange, onRemove }: CanvasItemProps) 
           onChange={(e) => onAmountChange(item.ingredientId, parseFloat(e.target.value) || 0)}
           className="h-9 w-20 max-w-full shrink-0 text-center"
         />
-        <span className="truncate text-sm text-stone-500">{item.unit}</span>
+        <span className="text-sm text-stone-500">{item.unit}</span>
+        {showConverter && (
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1 px-2 text-xs"
+              onClick={toggleUnit}
+              title={unitHint(item.unit, displayUnit === item.unit ? alt! : item.unit)}
+            >
+              <ArrowLeftRight className="h-3 w-3" />
+              ≈ {displayAmount} {displayUnit}
+            </Button>
+          </>
+        )}
       </div>
     </div>
   );

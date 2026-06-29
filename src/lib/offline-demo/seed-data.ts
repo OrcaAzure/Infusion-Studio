@@ -24,6 +24,7 @@ type DemoIngredient = {
   quantity: number;
   unit: string;
   pricePerUnit: number | null;
+  lowStockThreshold?: number;
   imageUrl: string | null;
   userId: string;
   createdAt: string;
@@ -72,6 +73,15 @@ type DemoFavorite = {
   createdAt: string;
 };
 
+type DemoBrewLog = {
+  id: string;
+  notes: string | null;
+  brewedAt: string;
+  userId: string;
+  blendId: string;
+  recipeId: string | null;
+};
+
 export type DemoState = {
   user: {
     id: string;
@@ -84,6 +94,7 @@ export type DemoState = {
   blendIngredients: DemoBlendIngredient[];
   recipes: DemoRecipe[];
   favorites: DemoFavorite[];
+  brewLogs: DemoBrewLog[];
 };
 
 const now = new Date().toISOString();
@@ -96,7 +107,8 @@ function ing(
   origin: string,
   flavorNotes: string[],
   quantity: number,
-  pricePerUnit: number
+  pricePerUnit: number,
+  lowStockThreshold = 50
 ): DemoIngredient {
   return {
     id,
@@ -108,6 +120,7 @@ function ing(
     quantity,
     unit: "g",
     pricePerUnit,
+    lowStockThreshold,
     imageUrl: null,
     userId: DEMO_USER_ID,
     createdAt: now,
@@ -120,7 +133,7 @@ export function createInitialDemoState(): DemoState {
     ing("seed-ing-1", "Sencha Green Tea", "Classic Japanese green tea with grassy, umami notes.", "TEA", "Japan", ["grassy", "umami", "vegetal"], 250, 0.08),
     ing("seed-ing-2", "Chamomile Flowers", "Dried chamomile blossoms for calming herbal infusions.", "FLOWER", "Egypt", ["floral", "honey", "apple"], 100, 0.12),
     ing("seed-ing-3", "Fresh Ginger Root", "Warming spice with bright, peppery heat.", "SPICE", "India", ["spicy", "warm", "citrus"], 150, 0.05),
-    ing("seed-ing-4", "Dried Lavender", "Fragrant purple buds for aromatic blends.", "FLOWER", "France", ["floral", "herbal", "sweet"], 50, 0.15),
+    ing("seed-ing-4", "Dried Lavender", "Fragrant purple buds for aromatic blends.", "FLOWER", "France", ["floral", "herbal", "sweet"], 50, 0.15, 30),
     ing("seed-ing-5", "Peppermint Leaves", "Cooling mint for refreshing infusions.", "HERB", "USA", ["cool", "minty", "fresh"], 80, 0.1),
     ing("seed-ing-6", "Dried Orange Peel", "Bright citrus zest for uplifting blends.", "FRUIT", "Spain", ["citrus", "sweet", "bright"], 60, 0.09),
   ];
@@ -152,7 +165,7 @@ export function createInitialDemoState(): DemoState {
       notes: "Perfect before bed. Steep covered for 5 minutes.",
       rating: 5,
       brewCount: 12,
-      lastBrewed: now,
+      lastBrewed: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
       isShared: true,
       isFeatured: true,
       blendId: DEMO_BLEND_ID,
@@ -167,13 +180,55 @@ export function createInitialDemoState(): DemoState {
       notes: "Light and grassy. Perfect for slow mornings.",
       rating: 4,
       brewCount: 8,
-      lastBrewed: null,
+      lastBrewed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
       isShared: true,
       isFeatured: true,
       blendId: DEMO_BLEND_ID,
       userId: DEMO_USER_ID,
       createdAt: now,
       updatedAt: now,
+    },
+    {
+      id: "seed-recipe-3",
+      name: "Weekend Sencha",
+      shareTitle: null,
+      notes: "Light first steep, 80°C water.",
+      rating: 4,
+      brewCount: 3,
+      lastBrewed: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      isShared: false,
+      isFeatured: false,
+      blendId: DEMO_BLEND_ID,
+      userId: DEMO_USER_ID,
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
+  const brewLogs: DemoBrewLog[] = [
+    {
+      id: "seed-log-1",
+      notes: "Extra lavender tonight — very calming.",
+      brewedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      userId: DEMO_USER_ID,
+      blendId: DEMO_BLEND_ID,
+      recipeId: "seed-recipe-1",
+    },
+    {
+      id: "seed-log-2",
+      notes: null,
+      brewedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      userId: DEMO_USER_ID,
+      blendId: DEMO_BLEND_ID,
+      recipeId: "seed-recipe-1",
+    },
+    {
+      id: "seed-log-3",
+      notes: "Shared with a friend — they loved it.",
+      brewedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+      userId: DEMO_USER_ID,
+      blendId: DEMO_BLEND_ID,
+      recipeId: "seed-recipe-1",
     },
   ];
 
@@ -189,5 +244,6 @@ export function createInitialDemoState(): DemoState {
     blendIngredients,
     recipes,
     favorites: [{ userId: DEMO_USER_ID, blendId: DEMO_BLEND_ID, createdAt: now }],
+    brewLogs,
   };
 }

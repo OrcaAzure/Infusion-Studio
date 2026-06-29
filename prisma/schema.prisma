@@ -23,6 +23,7 @@ model User {
   blends        Blend[]
   recipes       Recipe[]
   favorites     FavoriteBlend[]
+  brewLogs      BrewLog[]
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }
@@ -82,6 +83,7 @@ model Ingredient {
   quantity     Float              @default(0)
   unit         String             @default("g")
   pricePerUnit Float?
+  lowStockThreshold Int?
   imageUrl     String?
   userId       String
   user         User               @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -105,6 +107,7 @@ model Blend {
   ingredients BlendIngredient[]
   recipes     Recipe[]
   favorites   FavoriteBlend[]
+  brewLogs    BrewLog[]
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
@@ -139,6 +142,7 @@ model Recipe {
   blend      Blend     @relation(fields: [blendId], references: [id], onDelete: Cascade)
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brewLogs   BrewLog[]
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
@@ -157,4 +161,21 @@ model FavoriteBlend {
 
   @@unique([userId, blendId])
   @@index([userId])
+}
+
+model BrewLog {
+  id        String   @id @default(cuid())
+  notes     String?
+  brewedAt  DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blendId   String
+  blend     Blend    @relation(fields: [blendId], references: [id], onDelete: Cascade)
+  recipeId  String?
+  recipe    Recipe?  @relation(fields: [recipeId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([blendId])
+  @@index([recipeId])
+  @@index([brewedAt])
 }

@@ -59,6 +59,17 @@ export async function handleOfflineRequest(
   if (path === "/api/ingredients" && method === "POST") {
     return json(offlineStore.createIngredient(body), 201);
   }
+  if (path === "/api/ingredients/import" && method === "POST") {
+    const rows = (body.ingredients as Array<Record<string, unknown>>) ?? [];
+    if (!rows.length) return json({ error: "No ingredients to import" }, 400);
+    return json(offlineStore.importIngredients(rows), 201);
+  }
+
+  const stockMatch = path.match(/^\/api\/ingredients\/([^/]+)\/stock$/);
+  if (stockMatch && method === "POST") {
+    const item = offlineStore.adjustStock(stockMatch[1], Number(body.delta ?? 0));
+    return item ? json(item) : json({ error: "Ingredient not found" }, 404);
+  }
 
   // Ingredient by id
   const ingMatch = path.match(/^\/api\/ingredients\/([^/]+)$/);
@@ -158,6 +169,14 @@ export async function handleOfflineRequest(
     const result = offlineStore.updateProfile(body);
     if ("error" in result) return json({ error: result.error }, result.status);
     return json(result);
+  }
+
+  if (path === "/api/brew-logs" && method === "GET") {
+    return json(offlineStore.listBrewLogs(parsed.searchParams));
+  }
+  if (path === "/api/brew-logs" && method === "POST") {
+    const log = offlineStore.createBrewLog(body);
+    return log ? json(log, 201) : json({ error: "Invalid brew log" }, 400);
   }
 
   return json({ error: "Offline demo: route not mocked" }, 404);

@@ -8,6 +8,7 @@ import { ingredientCategories } from "@/lib/validations/ingredient";
 import { CATEGORY_LABELS } from "@/lib/utils";
 
 interface SearchFiltersProps {
+  initialCategory?: string;
   onFilterChange: (filters: {
     search: string;
     category: string;
@@ -31,13 +32,17 @@ const SORT_ORDER_OPTIONS: Record<string, { value: string; label: string }[]> = {
   ],
 };
 
-export function SearchFilters({ onFilterChange }: SearchFiltersProps) {
+export function SearchFilters({ initialCategory = "", onFilterChange }: SearchFiltersProps) {
   const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState(initialCategory);
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
 
   const orderOptions = useMemo(() => SORT_ORDER_OPTIONS[sortBy] ?? SORT_ORDER_OPTIONS.name, [sortBy]);
+
+  useEffect(() => {
+    setCategory(initialCategory);
+  }, [initialCategory]);
 
   useEffect(() => {
     const valid = orderOptions.some((o) => o.value === sortOrder);
@@ -68,29 +73,32 @@ export function SearchFilters({ onFilterChange }: SearchFiltersProps) {
           aria-label="Search ingredients by name"
         />
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <Select
-          options={categoryOptions}
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="sm:flex-1"
-        />
-        <Select
-          options={[
-            { value: "name", label: "Sort: Name" },
-            { value: "quantity", label: "Sort: Quantity" },
-            { value: "createdAt", label: "Sort: Date added" },
-          ]}
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-          className="sm:w-44"
-        />
-        <Select
-          options={orderOptions}
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value)}
-          className="sm:w-40"
-        />
+      <Select
+        options={categoryOptions}
+        value={category}
+        onChange={(e) => setCategory(e.target.value)}
+        className="w-full"
+      />
+      <div>
+        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-stone-500">Sort</p>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Select
+            options={[
+              { value: "name", label: "Sort: Name" },
+              { value: "quantity", label: "Sort: Quantity" },
+              { value: "createdAt", label: "Sort: Date added" },
+            ]}
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="sm:flex-1"
+          />
+          <Select
+            options={orderOptions}
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value)}
+            className="sm:flex-1"
+          />
+        </div>
       </div>
     </div>
   );
