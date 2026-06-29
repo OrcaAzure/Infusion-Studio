@@ -28,8 +28,8 @@ function hmsFromSeconds(total: number) {
 
 export default function TimerPage() {
   const setDuration = useTimerStore((s) => s.setDuration);
-  const activePreset = useTimerStore((s) => s.blendName);
   const initialSeconds = useTimerStore((s) => s.initialSeconds);
+  const [activePresetLabel, setActivePresetLabel] = useState<string | null>(null);
 
   const [hms, setHms] = useState(() => hmsFromSeconds(300));
 
@@ -37,6 +37,7 @@ export default function TimerPage() {
     const total = secondsFromHms(hms.h, hms.m, hms.s);
     if (total < 1) return;
     setDuration(total, "Custom brew");
+    setActivePresetLabel(null);
     setHms(hmsFromSeconds(total));
   };
 
@@ -90,11 +91,12 @@ export default function TimerPage() {
             {PRESETS.map((preset) => (
               <Button
                 key={preset.label}
-                variant={activePreset === preset.label ? "default" : "outline"}
+                variant={activePresetLabel === preset.label ? "default" : "outline"}
                 size="sm"
                 className="flex h-auto flex-col gap-0.5 py-2"
                 onClick={() => {
                   setDuration(preset.seconds, preset.label);
+                  setActivePresetLabel(preset.label);
                   setHms(hmsFromSeconds(preset.seconds));
                 }}
               >

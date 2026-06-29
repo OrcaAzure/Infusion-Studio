@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { BlendCreator } from "@/components/blends/blend-creator";
@@ -13,6 +13,7 @@ function EditBlendItemContent() {
   const [ingredients, setIngredients] = useState<IngredientWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const loadBlend = useBlendStore((s) => s.loadBlend);
+  const savedRef = useRef(false);
 
   useEffect(() => {
     if (!id) {
@@ -45,7 +46,9 @@ function EditBlendItemContent() {
     });
 
     return () => {
-      useBlendStore.getState().reset();
+      if (!savedRef.current) {
+        useBlendStore.getState().reset();
+      }
     };
   }, [id, loadBlend]);
 
@@ -54,7 +57,17 @@ function EditBlendItemContent() {
   return (
     <div>
       <DashboardHeader title="Edit Blend" description="Modify your blend composition" />
-      {loading ? <LoadingSpinner /> : <BlendCreator ingredients={ingredients} editBlendId={id} />}
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <BlendCreator
+          ingredients={ingredients}
+          editBlendId={id}
+          onSaved={() => {
+            savedRef.current = true;
+          }}
+        />
+      )}
     </div>
   );
 }

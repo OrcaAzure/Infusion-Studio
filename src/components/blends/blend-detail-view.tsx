@@ -19,6 +19,7 @@ import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingSpinner } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
 import { useTimerStore } from "@/stores";
 import { formatTime } from "@/lib/utils";
 import { appPath } from "@/lib/app-path";
@@ -33,6 +34,7 @@ interface BlendDetail extends BlendWithIngredients {
 
 export function BlendDetailView({ id }: { id: string }) {
   const router = useRouter();
+  const toast = useToast((s) => s.show);
   const [blend, setBlend] = useState<BlendDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
@@ -46,9 +48,11 @@ export function BlendDetailView({ id }: { id: string }) {
   const setDuration = useTimerStore((s) => s.setDuration);
 
   const fetchBlend = () => {
+    if (!id) return;
     fetch(`/api/blends/${id}`)
       .then((r) => {
         if (r.status === 401) {
+          toast("Session expired, please sign in");
           router.push(appPath("/login"));
           return null;
         }
@@ -63,9 +67,12 @@ export function BlendDetailView({ id }: { id: string }) {
   };
 
   useEffect(() => {
+    if (!id) return;
     fetchBlend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  if (!id) return <p>Blend not found</p>;
 
   const toggleFavorite = async () => {
     if (isFavorited) {
@@ -122,7 +129,16 @@ export function BlendDetailView({ id }: { id: string }) {
   if (loading) return <LoadingSpinner />;
   if (!blend) return <p>Blend not found</p>;
 
-  const totalAmount = blend.ingredients.reduce((sum, bi) => sum + bi.amount, 0);
+  const unitTotals = blend.ingredients.reduce(
+    (acc, bi) => {
+      acc[bi.unit] = (acc[bi.unit] ?? 0) + bi.amount;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+  const totalLabel = Object.entries(unitTotals)
+    .map(([unit, total]) => `${total.toFixed(1)} ${unit}`)
+    .join(" · ");
 
   return (
     <div>
@@ -200,7 +216,7 @@ export function BlendDetailView({ id }: { id: string }) {
           </div>
         )}
         <div className="rounded-lg bg-stone-100 px-4 py-2 text-sm dark:bg-stone-800">
-          Total: {totalAmount.toFixed(1)}g
+          Total: {totalLabel}
         </div>
       </div>
 

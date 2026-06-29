@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { AppLink } from "@/components/ui/app-link";
-import { type LucideIcon } from "lucide-react";
+import { type LucideIcon, Filter } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -122,6 +122,13 @@ export function CategoryChart({ data }: CategoryChartProps) {
       })}
       {data.length === 0 && (
         <p className="text-center text-sm text-stone-400">No data yet</p>
+      )}
+      {data.length > 0 && (
+        <p className="mt-2 text-center text-xs text-stone-400 dark:text-stone-500">
+          <span className="inline-flex items-center gap-1">
+            <Filter className="h-3 w-3" /> Tap a category to filter
+          </span>
+        </p>
       )}
     </div>
   );

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { BookOpen, Star, Trash2, Timer, Share2, Instagram, ChevronRight } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { ShareRecipeModal } from "@/components/discover/share-recipe-modal";
 import { SignupCtaModal } from "@/components/providers/signup-cta-modal";
 import { Card } from "@/components/ui/card";
-import { CategoryBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
@@ -70,6 +70,18 @@ export default function RecipesPage() {
       recipeId: recipe.id,
     });
     router.push(appPath("/timer"));
+  };
+
+  const rateRecipe = async (recipe: RecipeWithBlend, rating: number) => {
+    await fetch(`/api/recipes/${recipe.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating }),
+    });
+    fetchRecipes();
+    if (detailRecipe?.id === recipe.id) {
+      setDetailRecipe({ ...recipe, rating });
+    }
   };
 
   const handleShare = (recipe: RecipeWithBlend) => {
@@ -169,9 +181,42 @@ export default function RecipesPage() {
             {detailRecipe.notes && (
               <p className="text-sm text-stone-600 dark:text-stone-400">{detailRecipe.notes}</p>
             )}
-            <div className="flex flex-wrap gap-1">
+
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => rateRecipe(detailRecipe, star)}
+                  className="p-0.5"
+                >
+                  <Star
+                    className={`h-5 w-5 ${
+                      (detailRecipe.rating ?? 0) >= star
+                        ? "fill-amber-400 text-amber-400"
+                        : "text-stone-300"
+                    }`}
+                  />
+                </button>
+              ))}
+              {detailRecipe.rating ? (
+                <span className="ml-1 text-xs text-stone-400">{detailRecipe.rating}/5</span>
+              ) : null}
+            </div>
+
+            <div className="rounded-lg border border-stone-200 p-3 dark:border-stone-700">
               {detailRecipe.blend.ingredients.map((bi) => (
-                <CategoryBadge key={bi.id} category={bi.ingredient.category} />
+                <div
+                  key={bi.id}
+                  className="flex items-center justify-between border-b border-stone-100 py-1 text-sm last:border-0 dark:border-stone-800"
+                >
+                  <span className="font-medium text-stone-800 dark:text-stone-200">
+                    {bi.ingredient.name}
+                  </span>
+                  <span className="text-stone-500">
+                    {bi.amount} {bi.unit}
+                  </span>
+                </div>
               ))}
             </div>
             <p className="text-xs text-stone-400">
@@ -189,7 +234,7 @@ export default function RecipesPage() {
                   {brewLogs.map((log) => (
                     <li key={log.id} className="text-sm">
                       <span className="text-stone-500">
-                        {new Date(log.brewedAt).toLocaleString()}
+                        {format(new Date(log.brewedAt), "dd MMM yyyy, HH:mm")}
                       </span>
                       {log.notes && (
                         <p className="mt-0.5 text-stone-700 dark:text-stone-300">{log.notes}</p>

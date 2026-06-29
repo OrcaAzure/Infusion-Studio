@@ -10,12 +10,14 @@ import {
   BookOpen,
   Heart,
   Timer,
+  Clock,
   LogOut,
   Menu,
   X,
   Droplets,
   Instagram,
   Smartphone,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -25,12 +27,13 @@ import { Button } from "@/components/ui/button";
 import { AppLink } from "@/components/ui/app-link";
 import { isOfflineDemo } from "@/lib/offline-demo/api";
 
-const mainNavItems: { href: string; label: string; icon: LucideIcon }[] = [
+const mainNavItems: { href: string; label: string; icon: LucideIcon; tourId?: string }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/ingredients", label: "Ingredients", icon: Leaf },
+  { href: "/ingredients", label: "Ingredients", icon: Leaf, tourId: "ingredients" },
   { href: "/blends", label: "My Blends", icon: Droplets },
-  { href: "/blends/create", label: "Blend Creator", icon: FlaskConical },
-  { href: "/timer", label: "Brew Timer", icon: Timer },
+  { href: "/blends/create", label: "Blend Creator", icon: FlaskConical, tourId: "blend-creator" },
+  { href: "/timer", label: "Brew Timer", icon: Timer, tourId: "timer" },
+  { href: "/brew-logs", label: "Brew History", icon: Clock },
   { href: "/recipes", label: "Recipes", icon: BookOpen },
   { href: "/favorites", label: "Favorites", icon: Heart },
 ];
@@ -52,7 +55,7 @@ export function Sidebar() {
   const current = normalizePath(pathname);
 
   const renderNav = (items: typeof mainNavItems) =>
-    items.map(({ href, label, icon: Icon }) => {
+    items.map(({ href, label, icon: Icon, tourId }) => {
       const target = normalizePath(href);
       const isActive =
         current === target || (target !== "/dashboard" && current.startsWith(target + "/"));
@@ -60,6 +63,7 @@ export function Sidebar() {
         <AppLink
           key={href}
           href={href}
+          data-tour={tourId}
           onClick={() => setSidebarOpen(false)}
           className={cn(
             "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
@@ -98,6 +102,15 @@ export function Sidebar() {
 
       <div className="mt-auto space-y-4 border-t border-stone-200 pt-4 dark:border-stone-700">
         <ThemeToggle className="w-full justify-center" />
+        <AppLink href="/settings" onClick={() => setSidebarOpen(false)}>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-stone-600 dark:text-stone-400"
+          >
+            <Settings className="h-4 w-4" />
+            Settings
+          </Button>
+        </AppLink>
         {session?.user && (
           <div className="px-2">
             <p className="truncate text-sm font-medium text-stone-900 dark:text-stone-100">

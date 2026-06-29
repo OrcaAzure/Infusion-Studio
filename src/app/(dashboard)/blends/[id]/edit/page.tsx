@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { BlendCreator } from "@/components/blends/blend-creator";
@@ -13,6 +13,7 @@ export default function EditBlendPage() {
   const [ingredients, setIngredients] = useState<IngredientWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const loadBlend = useBlendStore((s) => s.loadBlend);
+  const savedRef = useRef(false);
 
   useEffect(() => {
     Promise.all([
@@ -41,7 +42,9 @@ export default function EditBlendPage() {
     });
 
     return () => {
-      useBlendStore.getState().reset();
+      if (!savedRef.current) {
+        useBlendStore.getState().reset();
+      }
     };
   }, [id, loadBlend]);
 
@@ -51,7 +54,17 @@ export default function EditBlendPage() {
         title="Edit Blend"
         description="Modify your blend composition"
       />
-      {loading ? <LoadingSpinner /> : <BlendCreator ingredients={ingredients} editBlendId={id} />}
+      {loading ? (
+        <LoadingSpinner />
+      ) : (
+        <BlendCreator
+          ingredients={ingredients}
+          editBlendId={id}
+          onSaved={() => {
+            savedRef.current = true;
+          }}
+        />
+      )}
     </div>
   );
 }

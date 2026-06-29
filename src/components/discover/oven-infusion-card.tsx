@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, Instagram } from "lucide-react";
+import { Star, Instagram, Heart } from "lucide-react";
 import { CategoryBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { formatTime, GLOW_COLORS } from "@/lib/utils";
@@ -14,9 +15,35 @@ interface OvenInfusionCardProps {
 
 /** Instagram-style recipe share card for @oven_infusion */
 export function OvenInfusionCard({ recipe, featured }: OvenInfusionCardProps) {
+  const [liked, setLiked] = useState(recipe.liked ?? false);
+  const [likeCount, setLikeCount] = useState(recipe._count?.recipeLikes ?? 0);
+  const [liking, setLiking] = useState(false);
+
   const handle = recipe.user.socialHandle ?? "oven_infusion";
   const title = recipe.shareTitle ?? recipe.name;
   const dominantCategory = recipe.blend.ingredients[0]?.ingredient.category ?? "TEA";
+
+  const toggleLike = async () => {
+    if (liking) return;
+    setLiking(true);
+    const nextLiked = !liked;
+    setLiked(nextLiked);
+    setLikeCount((c) => Math.max(0, c + (nextLiked ? 1 : -1)));
+
+    const res = await fetch(`/api/discover/${recipe.id}/like`, {
+      method: nextLiked ? "POST" : "DELETE",
+    });
+
+    setLiking(false);
+    if (res.ok) {
+      const data = await res.json();
+      setLiked(data.liked);
+      setLikeCount(data.count);
+    } else {
+      setLiked(!nextLiked);
+      setLikeCount((c) => Math.max(0, c + (nextLiked ? -1 : 1)));
+    }
+  };
 
   return (
     <motion.div
@@ -30,7 +57,6 @@ export function OvenInfusionCard({ recipe, featured }: OvenInfusionCardProps) {
         data-glow-color={GLOW_COLORS[dominantCategory]}
         className="overflow-hidden p-0"
       >
-        {/* IG-style header gradient */}
         <div
           className="relative h-28 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-4"
           data-glow-color={GLOW_COLORS[dominantCategory]}
@@ -52,12 +78,8 @@ export function OvenInfusionCard({ recipe, featured }: OvenInfusionCardProps) {
         </div>
 
         <div className="p-5">
-          <h3 className="mb-1 text-lg font-bold text-stone-900 dark:text-stone-100">
-            {title}
-          </h3>
-          <p className="mb-3 text-sm text-emerald-600 dark:text-emerald-400">
-            {recipe.blend.name}
-          </p>
+          <h3 className="mb-1 text-lg font-bold text-stone-900 dark:text-stone-100">{title}</h3>
+          <p className="mb-3 text-sm text-emerald-600 dark:text-emerald-400">{recipe.blend.name}</p>
 
           {recipe.notes && (
             <p className="mb-3 line-clamp-2 text-sm text-stone-500 dark:text-stone-400">
@@ -80,13 +102,19 @@ export function OvenInfusionCard({ recipe, featured }: OvenInfusionCardProps) {
                   ))}
                 </span>
               )}
-              {recipe.blend.brewTime && (
-                <span>{formatTime(recipe.blend.brewTime)} brew</span>
-              )}
+              {recipe.blend.brewTime && <span>{formatTime(recipe.blend.brewTime)} brew</span>}
             </div>
-            <span className="text-xs text-stone-400">
-              {recipe.brewCount} brews
-            </span>
+            <button
+              type="button"
+              onClick={toggleLike}
+              disabled={liking}
+              className="flex items-center gap-1 text-xs text-stone-500 hover:text-red-500 disabled:opacity-50"
+            >
+              <Heart
+                className={`h-4 w-4 ${liked ? "fill-red-500 text-red-500" : "text-stone-400"}`}
+              />
+              {likeCount}
+            </button>
           </div>
         </div>
       </Card>

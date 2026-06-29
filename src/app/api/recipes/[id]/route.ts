@@ -4,6 +4,46 @@ import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
+export async function PATCH(request: Request, context: RouteContext) {
+  const user = await getSessionUser();
+  if (!user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await context.params;
+
+  try {
+    const existing = await prisma.recipe.findFirst({
+      where: { id, userId: user.id },
+    });
+    if (!existing) {
+      return NextResponse.json({ error: "Recipe not found" }, { status: 404 });
+    }
+
+    const body = await request.json();
+    if (body.rating === undefined) {
+      return NextResponse.json({ error: "Rating required" }, { status: 400 });
+    }
+
+    const recipe = await prisma.recipe.update({
+      where: { id },
+      data: { rating: Number(body.rating) },
+      include: {
+        blend: {
+          include: {
+            ingredients: { include: { ingredient: true }, orderBy: { order: "asc" } },
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(recipe);
+  } catch (err) {
+    console.error("[API recipes PATCH]", err);
+    return NextResponse.json({ error: "Failed to update recipe" }, { status: 500 });
+  }
+}
+
 export async function PUT(request: Request, context: RouteContext) {
   const user = await getSessionUser();
   if (!user?.id) {

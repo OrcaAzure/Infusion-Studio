@@ -95,6 +95,7 @@ export type DemoState = {
   recipes: DemoRecipe[];
   favorites: DemoFavorite[];
   brewLogs: DemoBrewLog[];
+  recipeLikes: { userId: string; recipeId: string; createdAt: string }[];
 };
 
 const now = new Date().toISOString();
@@ -245,5 +246,6 @@ export function createInitialDemoState(): DemoState {
     recipes,
     favorites: [{ userId: DEMO_USER_ID, blendId: DEMO_BLEND_ID, createdAt: now }],
     brewLogs,
+    recipeLikes: [],
   };
 }

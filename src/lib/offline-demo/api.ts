@@ -133,6 +133,10 @@ export async function handleOfflineRequest(
   const recipeMatch = path.match(/^\/api\/recipes\/([^/]+)$/);
   if (recipeMatch) {
     const id = recipeMatch[1];
+    if (method === "PATCH") {
+      const item = offlineStore.updateRecipe(id, body);
+      return item ? json(item) : json({ error: "Recipe not found" }, 404);
+    }
     if (method === "PUT") {
       const item = offlineStore.updateRecipe(id, body);
       return item ? json(item) : json({ error: "Recipe not found" }, 404);
@@ -165,7 +169,7 @@ export async function handleOfflineRequest(
   if (path === "/api/profile" && method === "GET") {
     return json(offlineStore.getProfile());
   }
-  if (path === "/api/profile" && method === "PUT") {
+  if (path === "/api/profile" && (method === "PUT" || method === "PATCH")) {
     const result = offlineStore.updateProfile(body);
     if ("error" in result) return json({ error: result.error }, result.status);
     return json(result);
@@ -177,6 +181,19 @@ export async function handleOfflineRequest(
   if (path === "/api/brew-logs" && method === "POST") {
     const log = offlineStore.createBrewLog(body);
     return log ? json(log, 201) : json({ error: "Invalid brew log" }, 400);
+  }
+
+  const likeMatch = path.match(/^\/api\/discover\/([^/]+)\/like$/);
+  if (likeMatch) {
+    const recipeId = likeMatch[1];
+    if (method === "POST") {
+      const result = offlineStore.toggleRecipeLike(recipeId, true);
+      return result ? json(result) : json({ error: "Recipe not found" }, 404);
+    }
+    if (method === "DELETE") {
+      const result = offlineStore.toggleRecipeLike(recipeId, false);
+      return result ? json(result) : json({ error: "Recipe not found" }, 404);
+    }
   }
 
   return json({ error: "Offline demo: route not mocked" }, 404);

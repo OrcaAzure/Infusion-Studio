@@ -19,6 +19,8 @@ export type RecipeWithBlend = Recipe & {
 
 export type SharedRecipe = RecipeWithBlend & {
   user: { socialHandle: string | null; name: string | null };
+  _count?: { recipeLikes: number };
+  liked?: boolean;
 };
 
 export type FavoriteWithBlend = FavoriteBlend & {

@@ -8,9 +8,29 @@ import {
 import { demoStorageGet, demoStorageSet } from "./preferences";
 
 let state: DemoState = createInitialDemoState();
+let stateReady = false;
 
 function normalizeState(raw: DemoState): DemoState {
-  return { ...raw, brewLogs: raw.brewLogs ?? [] };
+  return { ...raw, brewLogs: raw.brewLogs ?? [], recipeLikes: raw.recipeLikes ?? [] };
+}
+
+export async function initDemoState() {
+  if (typeof window === "undefined") return;
+  const raw = await demoStorageGet();
+  if (raw) {
+    try {
+      state = normalizeState(JSON.parse(raw) as DemoState);
+    } catch {
+      state = createInitialDemoState();
+    }
+  } else {
+    state = createInitialDemoState();
+  }
+  stateReady = true;
+}
+
+export function isDemoStateReady() {
+  return stateReady;
 }
 
 function touch() {
@@ -20,26 +40,12 @@ function touch() {
 }
 
 export function loadDemoState() {
-  if (typeof window === "undefined") return;
-  try {
-    const raw = localStorage.getItem("infusion-studio-offline-demo");
-    if (raw) state = normalizeState(JSON.parse(raw) as DemoState);
-  } catch {
-    state = createInitialDemoState();
-  }
-  void demoStorageGet().then((raw) => {
-    if (raw) {
-      try {
-        state = normalizeState(JSON.parse(raw) as DemoState);
-      } catch {
-        /* keep prior */
-      }
-    }
-  });
+  if (typeof window === "undefined" || !stateReady) return;
 }
 
 export function resetDemoState() {
   state = createInitialDemoState();
+  stateReady = true;
   touch();
 }
 
@@ -94,9 +100,15 @@ function recipeWithBlend(recipeId: string) {
 function sharedRecipe(recipeId: string) {
   const recipe = recipeWithBlend(recipeId);
   if (!recipe?.isShared) return null;
+  const likeCount = state.recipeLikes.filter((l) => l.recipeId === recipeId).length;
+  const liked = state.recipeLikes.some(
+    (l) => l.recipeId === recipeId && l.userId === DEMO_USER_ID
+  );
   return {
     ...recipe,
     user: { socialHandle: state.user.socialHandle, name: state.user.name },
+    _count: { recipeLikes: likeCount },
+    liked,
   };
 }
 
@@ -484,14 +496,39 @@ export const offlineStore = {
   },
 
   updateProfile(data: Record<string, unknown>) {
-    const handle = String(data.socialHandle ?? "")
-      .replace(/^@/, "")
-      .toLowerCase()
-      .trim();
-    if (handle.length < 3) return { error: "Handle must be at least 3 characters", status: 400 };
-    state.user.socialHandle = handle;
+    if (data.name !== undefined) {
+      const name = String(data.name).trim();
+      if (!name) return { error: "Name is required", status: 400 };
+      state.user.name = name;
+    }
+    if (data.socialHandle !== undefined) {
+      const handle = String(data.socialHandle ?? "")
+        .replace(/^@/, "")
+        .toLowerCase()
+        .trim();
+      if (handle.length < 3) return { error: "Handle must be at least 3 characters", status: 400 };
+      state.user.socialHandle = handle;
+    }
     touch();
     return { socialHandle: state.user.socialHandle, name: state.user.name };
+  },
+
+  toggleRecipeLike(recipeId: string, liked: boolean) {
+    const recipe = state.recipes.find((r) => r.id === recipeId && r.isShared);
+    if (!recipe) return null;
+    state.recipeLikes = state.recipeLikes.filter(
+      (l) => !(l.userId === DEMO_USER_ID && l.recipeId === recipeId)
+    );
+    if (liked) {
+      state.recipeLikes.push({
+        userId: DEMO_USER_ID,
+        recipeId,
+        createdAt: new Date().toISOString(),
+      });
+    }
+    touch();
+    const count = state.recipeLikes.filter((l) => l.recipeId === recipeId).length;
+    return { liked, count };
   },
 
   listBrewLogs(params: URLSearchParams) {

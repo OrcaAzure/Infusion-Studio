@@ -81,23 +81,29 @@ export function SearchFilters({ initialCategory = "", onFilterChange }: SearchFi
       />
       <div>
         <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-stone-500">Sort</p>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <Select
-            options={[
-              { value: "name", label: "Sort: Name" },
-              { value: "quantity", label: "Sort: Quantity" },
-              { value: "createdAt", label: "Sort: Date added" },
-            ]}
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="sm:flex-1"
-          />
-          <Select
-            options={orderOptions}
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-            className="sm:flex-1"
-          />
+        <div className="flex items-end gap-2">
+          <div className="flex flex-1 flex-col gap-1">
+            <label className="text-xs font-medium text-stone-500">Sort by</label>
+            <Select
+              options={[
+                { value: "name", label: "Name" },
+                { value: "quantity", label: "Quantity" },
+                { value: "createdAt", label: "Date added" },
+              ]}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          <div className="flex flex-1 flex-col gap-1">
+            <label className="text-xs font-medium text-stone-500">Order</label>
+            <Select
+              options={orderOptions}
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="w-full"
+            />
+          </div>
         </div>
       </div>
     </div>

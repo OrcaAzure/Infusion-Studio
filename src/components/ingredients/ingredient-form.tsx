@@ -92,7 +92,10 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
       body: JSON.stringify(payload),
     });
 
-    if (!res.ok) return;
+    if (!res.ok) {
+      toast("Failed to save - please try again");
+      return;
+    }
 
     const saved = isEditing ? ingredient : await res.json();
     toast(isEditing ? "Changes saved" : "Ingredient added");
@@ -196,14 +199,19 @@ export function IngredientForm({ ingredient, onSuccess }: IngredientFormProps) {
           )}
         />
 
-        <Input
-          id="pricePerUnit"
-          label="Price per unit ($)"
-          type="number"
-          step="0.01"
-          placeholder="0.08"
-          error={errors.pricePerUnit?.message}
-          {...register("pricePerUnit")}
+        <Controller
+          name="pricePerUnit"
+          control={control}
+          render={({ field }) => (
+            <NumberInput
+              label="Price per unit ($)"
+              value={field.value ?? 0}
+              onChange={field.onChange}
+              min={0}
+              step={0.01}
+              error={errors.pricePerUnit?.message}
+            />
+          )}
         />
 
         <div className="space-y-2">

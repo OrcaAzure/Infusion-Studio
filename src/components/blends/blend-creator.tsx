@@ -42,9 +42,10 @@ const DESC_MAX = 500;
 interface BlendCreatorProps {
   ingredients: IngredientWithMeta[];
   editBlendId?: string;
+  onSaved?: () => void;
 }
 
-export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
+export function BlendCreator({ ingredients, editBlendId, onSaved }: BlendCreatorProps) {
   const router = useRouter();
   const toast = useToast((s) => s.show);
   const [activeIngredient, setActiveIngredient] = useState<IngredientWithMeta | null>(null);
@@ -195,6 +196,7 @@ export function BlendCreator({ ingredients, editBlendId }: BlendCreatorProps) {
     }
 
     const blend = await res.json();
+    onSaved?.();
     reset();
     router.push(blendPath(blend.id));
   };

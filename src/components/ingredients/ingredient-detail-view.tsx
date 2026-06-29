@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { NumberInput } from "@/components/ui/number-input";
 import { LoadingSpinner } from "@/components/ui/empty-state";
+import { useToast } from "@/components/ui/toast";
 import { PairingSuggestions } from "@/components/ingredients/pairing-suggestions";
 import { formatCurrency } from "@/lib/utils";
 import { appPath } from "@/lib/app-path";
@@ -26,6 +27,7 @@ interface IngredientDetail extends IngredientWithMeta {
 
 export function IngredientDetailView({ id }: { id: string }) {
   const router = useRouter();
+  const toast = useToast((s) => s.show);
   const [ingredient, setIngredient] = useState<IngredientDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -34,9 +36,11 @@ export function IngredientDetailView({ id }: { id: string }) {
   const [stockSaving, setStockSaving] = useState(false);
 
   const load = () => {
+    if (!id) return;
     fetch(`/api/ingredients/${id}`)
       .then((r) => {
         if (r.status === 401) {
+          toast("Session expired, please sign in");
           router.push(appPath("/login"));
           return null;
         }
