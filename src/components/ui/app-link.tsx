@@ -12,7 +12,15 @@ export function AppLink({ href, ...props }: AppLinkProps) {
     typeof href === "string"
       ? appPath(href)
       : typeof href === "object" && href.pathname
-        ? { ...href, pathname: appPath(href.pathname) }
+        ? {
+            ...href,
+            pathname: appPath(
+              href.search
+                ? `${href.pathname}?${href.search.replace(/^\?/, "")}`
+                : href.pathname
+            ),
+            search: undefined,
+          }
         : href;
-  return <NextLink href={resolved} {...props} />;
+  return <NextLink href={resolved} prefetch {...props} />;
 }

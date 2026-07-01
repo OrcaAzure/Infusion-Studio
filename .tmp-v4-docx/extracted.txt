@@ -1,0 +1,427 @@
+﻿Infusion Studio
+Cursor Prompts â€” v4 QA & Feature Pass
+Self-contained prompts based on v4 code review. Paste one at a time into Cursor. Run bug fixes first â€” Prompt 1 is the most critical.
+ðŸ”´  Bug fix
+ðŸŸ¡  Polish
+ðŸŸ£  New feature
+Run in order shown
+1. Bug fixes  ðŸ”´  Run these first
+These are live issues found in the v4 codebase. Fix in order â€” earlier prompts fix foundations later ones rely on.
+Prompt 1 â€” Fix auth 401 client-side timing (CRITICAL)
+The API routes now correctly return 401, but client pages may fire fetches before the NextAuth session cookie is available on mount.
+In Infusion Studio v4, users are still being redirected to /login when clicking their own blends and ingredients even though the API routes correctly return 401. The root cause is likely a fetch firing before the session is hydrated.
+
+Fix the following:
+
+1. In src/components/blends/blend-detail-view.tsx â€” wrap the fetchBlend call in a session check. Import { useSession } from 'next-auth/react'. Add const { status } = useSession(). In the useEffect, add: if (status === 'loading') return; before the fetch. This ensures the fetch only fires once the session cookie is confirmed present.
+
+2. Apply the same pattern to src/components/ingredients/ingredient-detail-view.tsx â€” add useSession() status check before the load() call in useEffect.
+
+3. In src/app/(dashboard)/dashboard/page.tsx â€” add useSession() guard before the /api/dashboard fetch.
+
+4. In src/app/(dashboard)/blends/page.tsx and src/app/(dashboard)/ingredients/page.tsx â€” same pattern: import useSession, check status !== 'loading' before fetching.
+
+5. For the offline APK where useSession is not available (SKIP_AUTH=true or isOfflineDemo), skip the session check entirely â€” wrap with: if (!isOfflineDemo() && status === 'loading') return;
+
+Test by: hard-refreshing the page while logged in and clicking a user-created blend â€” it should load correctly without flashing to /login.
+Prompt 2 â€” Fix stale rating after update + settings 400 error
+Two bugs in Infusion Studio v4:
+
+BUG 1 â€” In src/app/(dashboard)/recipes/page.tsx, the rateRecipe function calls:
+setDetailRecipe({ ...recipe, rating });
+But this uses the old recipe object from closure, not the freshly-saved API response. Replace with:
+const rateRecipe = async (recipe: RecipeWithBlend, rating: number) => {
+  const res = await fetch(`/api/recipes/${recipe.id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rating }),
+  });
+  if (!res.ok) { toast('Failed to save rating'); return; }
+  const updated = await res.json();
+  setDetailRecipe(updated);
+  fetchRecipes();
+};
+
+BUG 2 â€” In src/app/(dashboard)/settings/page.tsx, if a user submits an empty socialHandle the API returns 400 with { error: 'Handle must be at least 3 characters' } but no toast shows. Fix the onSubmit function:
+const res = await fetch('/api/profile', { method: 'PUT', ... });
+if (!res.ok) {
+  const err = await res.json().catch(() => ({}));
+  toast(err.error ?? 'Failed to save settings');
+  return;
+}
+
+Also update src/app/api/profile/route.ts PUT handler: if socialHandle is an empty string, set data.socialHandle = null instead of returning 400. This allows users to clear their handle.
+Prompt 3 â€” Fix onboarding tour overlay on Capacitor APK
+In Infusion Studio v4, the OnboardingTour component in src/components/providers/onboarding-tour.tsx uses a fixed inset-0 overlay (className='fixed inset-0 z-[200]...'). On the Capacitor Android WebView, position:fixed collapses the iframe viewport to min-height: 100px, making the tour invisible or broken.
+
+Fix by replacing the fixed positioning approach:
+
+1. Change the outer div from:
+   <div className='fixed inset-0 z-[200] flex min-h-dvh flex-col justify-end bg-black/50 p-4'>
+   To a normal-flow wrapper that contributes layout height:
+   <div style={{ position: 'absolute', inset: 0, zIndex: 200, display: 'flex', flexDirection: 'column',
+     justifyContent: 'flex-end', minHeight: '100dvh', background: 'rgba(0,0,0,0.5)', padding: '1rem' }}>
+
+2. Wrap the entire app in a position:relative container in src/app/(dashboard)/layout.tsx so the absolute positioning has a reference frame:
+   <div style={{ position: 'relative', minHeight: '100dvh' }}>
+     {children}
+   </div>
+
+3. Alternatively (simpler for APK), replace the DOM overlay with Capacitor Dialog:
+   Install @capacitor/dialog. In each STEPS iteration call:
+   await Dialog.alert({ title: current.title, message: current.body + '\n\nLook for the pulsing dot in the sidebar.' });
+   Guard with: const isNative = (await import('@capacitor/core')).Capacitor.isNativePlatform();
+   Use Dialog for native, DOM overlay for web.
+Prompt 4 â€” Add brew log pagination + deleted blend fallback
+Two gaps in src/app/(dashboard)/brew-logs/page.tsx:
+
+FIX 1 â€” The brew logs page fetches /api/brew-logs (take: 50) with no way to load more. Add cursor-based pagination:
+
+1. Add state: const [cursor, setCursor] = useState<string | null>(null); const [hasMore, setHasMore] = useState(false);
+
+2. Update the fetch URL: `/api/brew-logs${cursor ? `?cursor=${cursor}` : ''}`
+
+3. Update src/app/api/brew-logs/route.ts GET handler to accept cursor param:
+   const cursor = request.nextUrl.searchParams.get('cursor');
+   Add to findMany: take: 51, ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {})
+   Return: { logs: logs.slice(0, 50), nextCursor: logs.length > 50 ? logs[49].id : null }
+
+4. On the page, if nextCursor exists show a Load more button that appends results.
+
+FIX 2 â€” If a blend was deleted, log.blend is null but the component renders nothing. Replace the AppLink with:
+{log.blend ? (
+  <AppLink href={blendPath(log.blend.id)} className='mt-1 block font-medium text-emerald-600 hover:underline'>
+    {log.blend.name}
+  </AppLink>
+) : (
+  <p className='mt-1 text-sm text-stone-400 italic'>Blend deleted</p>
+)}
+2. Polish  ðŸŸ¡
+Quality-of-life improvements. Run after all bug fixes are done.
+Prompt 5 â€” Brew log date grouping + last brewed formatting
+Two presentation improvements in Infusion Studio v4:
+
+POLISH 1 â€” In src/app/(dashboard)/brew-logs/page.tsx, group logs by date with sticky headers. Import { isToday, isYesterday, format } from 'date-fns'.
+
+Add a groupByDate helper:
+function groupByDate(logs: BrewLogEntry[]) {
+  const map = new Map<string, BrewLogEntry[]>();
+  logs.forEach((log) => {
+    const d = new Date(log.brewedAt);
+    const key = isToday(d) ? 'Today' : isYesterday(d) ? 'Yesterday' : format(d, 'dd MMM yyyy');
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(log);
+  });
+  return map;
+}
+
+Render each group with a <h3> date header above its <ul> of log items.
+
+POLISH 2 â€” In src/app/(dashboard)/recipes/page.tsx, the detail modal shows recipe.lastBrewed as a raw ISO string. Fix by importing format from 'date-fns' and rendering:
+{recipe.lastBrewed && (
+  <p className='text-xs text-stone-400'>
+    Last brewed {format(new Date(recipe.lastBrewed), 'dd MMM yyyy')} Â· Brewed {recipe.brewCount} time{recipe.brewCount !== 1 ? 's' : ''}
+  </p>
+)}
+Place this below the star rating row in the detail modal.
+Prompt 6 â€” Discover card ingredient names + favorites quick brew
+Two UX polish items in Infusion Studio v4:
+
+POLISH 1 â€” In src/components/discover/oven-infusion-card.tsx, the card shows category badges but not ingredient names, making community recipes feel generic. Replace the badge-only row with:
+<div className='mb-3'>
+  <p className='text-sm text-stone-600 dark:text-stone-400'>
+    {recipe.blend.ingredients
+      .slice(0, 3)
+      .map((bi) => bi.ingredient.name)
+      .join(', ')}
+    {recipe.blend.ingredients.length > 3 &&
+      ` +${recipe.blend.ingredients.length - 3} more`}
+  </p>
+  <div className='mt-1 flex flex-wrap gap-1'>
+    {recipe.blend.ingredients.map((bi) => (
+      <CategoryBadge key={bi.id} category={bi.ingredient.category} />
+    ))}
+  </div>
+</div>
+
+POLISH 2 â€” In src/app/(dashboard)/favorites/page.tsx, add a quick Brew button to each favorite card. Import useTimerStore and useRouter at the top. On each favorite card, add alongside the existing actions:
+<Button size='sm' variant='outline' onClick={() => {
+  setDuration(blend.brewTime ?? 300, blend.name, { blendId: blend.id });
+  router.push(appPath('/timer'));
+}}>
+  <Timer className='h-3.5 w-3.5 mr-1' /> Brew
+</Button>
+Prompt 7 â€” Fix chart hint tap vs click + safe-area CSS class
+Two small polish fixes in Infusion Studio v4:
+
+POLISH 1 â€” In src/components/dashboard/stats.tsx, the CategoryChart shows 'Tap a category to filter' but on desktop it should say 'Click'. Replace the static hint with a responsive label:
+const [isTouch, setIsTouch] = useState(false);
+useEffect(() => {
+  setIsTouch(window.matchMedia('(pointer: coarse)').matches);
+}, []);
+Then render: {isTouch ? 'Tap' : 'Click'} a category to filter
+
+POLISH 2 â€” The inline safe-area paddingTop style is repeated on every page. Extract it to a global CSS class in src/app/globals.css:
+.page-header-pt {
+  padding-top: max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem));
+}
+
+Then in src/components/layout/sidebar.tsx DashboardHeader, replace:
+style={{ paddingTop: 'max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem))' }}
+with: className='page-header-pt'
+
+And in src/components/blends/blend-detail-view.tsx, do the same replacement.
+Search for paddingTop across the whole src directory and replace all occurrences.
+3. New features  ðŸŸ£
+Each prompt is independent. Implement in any order after bug fixes.
+Prompt 8 â€” Blend search and sort on My Blends page
+Add client-side search and sort to src/app/(dashboard)/blends/page.tsx in Infusion Studio.
+
+1. Add state:
+   const [search, setSearch] = useState('');
+   const [sortBy, setSortBy] = useState<'updatedAt' | 'name' | 'ingredients'>('updatedAt');
+
+2. Compute filtered and sorted blends:
+   const visible = blends
+     .filter((b) => !search || b.name.toLowerCase().includes(search.toLowerCase()) ||
+       (b.description ?? '').toLowerCase().includes(search.toLowerCase()))
+     .sort((a, b) => {
+       if (sortBy === 'name') return a.name.localeCompare(b.name);
+       if (sortBy === 'ingredients') return b.ingredients.length - a.ingredients.length;
+       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+     });
+
+3. Render controls above the blend grid:
+   <div className='mb-4 flex gap-2'>
+     <Input placeholder='Search blends...' value={search} onChange={(e) => setSearch(e.target.value)} className='flex-1' />
+     <Select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+       options={[
+         { value: 'updatedAt', label: 'Newest' },
+         { value: 'name', label: 'Aâ€“Z' },
+         { value: 'ingredients', label: 'Most ingredients' },
+       ]} />
+   </div>
+
+4. Render {visible.map(...)} instead of {blends.map(...)}.
+5. Show an EmptyState when visible.length === 0 and search is set:
+   <EmptyState title={`No blends matching "${search}"`} description='Try a different name' />
+Prompt 9 â€” Blend export (download as JSON)
+Add a download/export button to src/components/blends/blend-detail-view.tsx in Infusion Studio.
+
+1. Add an exportBlend function:
+const exportBlend = () => {
+  if (!blend) return;
+  const data = {
+    name: blend.name,
+    description: blend.description,
+    brewTemp: blend.brewTemp ? `${blend.brewTemp}Â°C` : null,
+    brewTime: blend.brewTime ? formatTime(blend.brewTime) : null,
+    ingredients: blend.ingredients.map((bi) => ({
+      name: bi.ingredient.name,
+      category: bi.ingredient.category,
+      amount: bi.amount,
+      unit: bi.unit,
+    })),
+    exportedAt: new Date().toISOString(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${blend.name.toLowerCase().replace(/\s+/g, '-')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+};
+
+2. Import { Download } from 'lucide-react'.
+
+3. Add to the action buttons row (next to Edit):
+<Button variant='outline' size='icon' className='h-9 w-9' onClick={exportBlend} aria-label='Export blend'>
+  <Download className='h-4 w-4' />
+</Button>
+Prompt 10 â€” Duplicate blend button
+Add a Duplicate blend button to src/components/blends/blend-detail-view.tsx in Infusion Studio.
+
+1. Add state: const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+
+2. Add a duplicateBlend function:
+const duplicateBlend = async () => {
+  const res = await fetch('/api/blends', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      name: `Copy of ${blend!.name}`,
+      description: blend!.description,
+      brewTemp: blend!.brewTemp,
+      brewTime: blend!.brewTime,
+      ingredients: blend!.ingredients.map((bi, i) => ({
+        ingredientId: bi.ingredientId,
+        amount: bi.amount,
+        unit: bi.unit,
+        order: i,
+      })),
+    }),
+  });
+  if (res.ok) {
+    const newBlend = await res.json();
+    router.push(blendPath(newBlend.id));
+  } else {
+    toast('Failed to duplicate blend');
+  }
+};
+
+3. Import { Copy } from 'lucide-react'.
+
+4. Add a Duplicate button next to Edit in the header action row:
+<Button variant='outline' size='icon' className='h-9 w-9' onClick={() => setShowDuplicateModal(true)} aria-label='Duplicate blend'>
+  <Copy className='h-4 w-4' />
+</Button>
+
+5. Add a ConfirmModal:
+<ConfirmModal isOpen={showDuplicateModal} title='Duplicate blend?'
+  message={`Creates a copy named "Copy of ${blend?.name}"`}
+  confirmLabel='Duplicate' variant='default'
+  onCancel={() => setShowDuplicateModal(false)}
+  onConfirm={duplicateBlend} />
+Prompt 11 â€” Brew streak tracker on dashboard
+Add a brew streak tracker to the Infusion Studio dashboard.
+
+1. In src/app/api/dashboard/route.ts, add a streak calculation to the Promise.all:
+   prisma.brewLog.findMany({
+     where: { userId },
+     orderBy: { brewedAt: 'desc' },
+     take: 60,
+     select: { brewedAt: true },
+   })
+
+   Then compute streak:
+   function calcStreak(logs: { brewedAt: Date }[]): number {
+     if (!logs.length) return 0;
+     const days = [...new Set(logs.map((l) => l.brewedAt.toISOString().slice(0, 10)))].sort().reverse();
+     const today = new Date().toISOString().slice(0, 10);
+     const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+     if (days[0] !== today && days[0] !== yesterday) return 0;
+     let streak = 1;
+     for (let i = 1; i < days.length; i++) {
+       const prev = new Date(days[i - 1]);
+       const curr = new Date(days[i]);
+       if ((prev.getTime() - curr.getTime()) === 86400000) streak++;
+       else break;
+     }
+     return streak;
+   }
+   Include brewStreak in the JSON response.
+
+2. Update the DashboardStats type in src/types/index.ts to add: brewStreak: number;
+
+3. In src/app/(dashboard)/dashboard/page.tsx, add a streak StatCard after the Favorites card:
+   <StatCard
+     title='Brew streak'
+     value={stats.brewStreak === 0 ? 'â€”' : `${stats.brewStreak} day${stats.brewStreak !== 1 ? 's' : ''}`}
+     icon={Flame}
+     index={4}
+     href='/brew-logs'
+   />
+   Import Flame from 'lucide-react'.
+Prompt 12 â€” Edit brew log notes from history page
+Add inline note editing to src/app/(dashboard)/brew-logs/page.tsx in Infusion Studio.
+
+1. Create src/app/api/brew-logs/[id]/route.ts with a PATCH handler:
+   export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
+     const user = await getSessionUser();
+     if (!user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+     const { id } = await context.params;
+     const { notes } = await request.json();
+     const existing = await prisma.brewLog.findFirst({ where: { id, userId: user.id } });
+     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+     const updated = await prisma.brewLog.update({ where: { id }, data: { notes: notes ?? null } });
+     return NextResponse.json(updated);
+   }
+
+2. In brew-logs/page.tsx, add editing state:
+   const [editingId, setEditingId] = useState<string | null>(null);
+   const [editNotes, setEditNotes] = useState('');
+
+3. Add a saveNotes function:
+   const saveNotes = async (id: string) => {
+     await fetch(`/api/brew-logs/${id}`, {
+       method: 'PATCH',
+       headers: { 'Content-Type': 'application/json' },
+       body: JSON.stringify({ notes: editNotes }),
+     });
+     setLogs((prev) => prev.map((l) => l.id === id ? { ...l, notes: editNotes } : l));
+     setEditingId(null);
+   };
+
+4. On each log item, if editingId === log.id show a Textarea + Save/Cancel buttons. Otherwise show the notes text + a small Edit icon button that sets editingId and editNotes.
+Prompt 13 â€” Keep screen awake during brew timer
+Add screen wake lock to src/components/timer/brew-timer.tsx in Infusion Studio so the phone screen stays on while a brew is running.
+
+1. Install @capacitor-community/keep-awake if not already in package.json:
+   npm install @capacitor-community/keep-awake
+
+2. In brew-timer.tsx, add a useEffect that watches isRunning:
+   useEffect(() => {
+     let wakeLock: WakeLockSentinel | null = null;
+     async function acquireWakeLock() {
+       try {
+         if ('wakeLock' in navigator) {
+           wakeLock = await (navigator as Navigator & { wakeLock: { request: (type: string) => Promise<WakeLockSentinel> } }).wakeLock.request('screen');
+         } else {
+           const { KeepAwake } = await import('@capacitor-community/keep-awake');
+           await KeepAwake.keepAwake();
+         }
+       } catch { }
+     }
+     async function releaseWakeLock() {
+       try {
+         if (wakeLock) { await wakeLock.release(); wakeLock = null; }
+         else {
+           const { KeepAwake } = await import('@capacitor-community/keep-awake');
+           await KeepAwake.allowSleep();
+         }
+       } catch { }
+     }
+     if (isRunning) acquireWakeLock();
+     else releaseWakeLock();
+     return () => { releaseWakeLock(); };
+   }, [isRunning]);
+
+The Web Wake Lock API is used on PWA/web, Capacitor KeepAwake is used as fallback for Android. Both are wrapped in try/catch so failure is silent.
+Prompt 14 â€” Weekly brew summary notification
+Add a weekly brew summary push notification to Infusion Studio using Capacitor Local Notifications.
+
+1. Create src/lib/weekly-summary.ts:
+   import { LocalNotifications } from '@capacitor/local-notifications';
+   import { Capacitor } from '@capacitor/core';
+
+   export async function scheduleWeeklySummary(brewCount: number, blendCount: number) {
+     if (!Capacitor.isNativePlatform()) return;
+     await LocalNotifications.requestPermissions();
+     const nextSunday = new Date();
+     nextSunday.setDate(nextSunday.getDate() + (7 - nextSunday.getDay()) % 7 || 7);
+     nextSunday.setHours(9, 0, 0, 0);
+     await LocalNotifications.schedule({
+       notifications: [{
+         id: 9001,
+         title: 'Your week in brewing â˜•',
+         body: `${brewCount} brew${brewCount !== 1 ? 's' : ''} logged Â· ${blendCount} blend${blendCount !== 1 ? 's' : ''} created this week`,
+         schedule: { at: nextSunday, allowWhileIdle: true },
+       }],
+     });
+   }
+
+2. In src/components/providers/offline-demo-provider.tsx (or a new AppStartupEffect component), call scheduleWeeklySummary on app mount:
+   useEffect(() => {
+     fetch('/api/dashboard')
+       .then((r) => r.json())
+       .then((data) => scheduleWeeklySummary(data.totalBrewsThisWeek ?? 0, data.totalBlends ?? 0))
+       .catch(() => {});
+   }, []);
+
+3. In src/app/api/dashboard/route.ts, add a totalBrewsThisWeek count to the response:
+   prisma.brewLog.count({
+     where: { userId, brewedAt: { gte: new Date(Date.now() - 7 * 86400 * 1000) } },
+   })
+14 prompts total  Â·  4 bug fixes  Â·  3 polish  Â·  7 new features
+Run Prompts 1â€“4 first. Everything else can run in any order.

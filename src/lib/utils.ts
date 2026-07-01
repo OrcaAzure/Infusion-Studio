@@ -49,7 +49,7 @@ export const GLOW_COLORS: Record<string, string> = {
   FRUIT: "#eab308",
   FLOWER: "#a855f7",
   OTHER: "#78716c",
-  brand: "#059669",
+  brand: "#40916c",
 };
 
 /** Category color mapping for badges */

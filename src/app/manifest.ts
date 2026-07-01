@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: "Infusion",
     description:
       "Craft, blend, and brew artisan infusions. Manage ingredients, create blends, and share recipes.",
-    start_url: "/dashboard",
+    start_url: "/",
     display: "standalone",
     background_color: "#fafaf9",
     theme_color: "#059669",

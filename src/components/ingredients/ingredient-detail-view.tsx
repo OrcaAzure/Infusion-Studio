@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { AppLink } from "@/components/ui/app-link";
 import { Pencil, Trash2, MapPin, Package, Leaf, Minus, Plus } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
@@ -16,6 +17,7 @@ import { useToast } from "@/components/ui/toast";
 import { PairingSuggestions } from "@/components/ingredients/pairing-suggestions";
 import { formatCurrency } from "@/lib/utils";
 import { appPath } from "@/lib/app-path";
+import { isOfflineDemo } from "@/lib/offline-demo/api";
 import { ingredientEditPath, blendPath } from "@/lib/entity-path";
 import type { IngredientWithMeta } from "@/types";
 
@@ -27,6 +29,7 @@ interface IngredientDetail extends IngredientWithMeta {
 
 export function IngredientDetailView({ id }: { id: string }) {
   const router = useRouter();
+  const { status } = useSession();
   const toast = useToast((s) => s.show);
   const [ingredient, setIngredient] = useState<IngredientDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,9 +56,10 @@ export function IngredientDetailView({ id }: { id: string }) {
   };
 
   useEffect(() => {
+    if (!isOfflineDemo() && status === "loading") return;
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, status]);
 
   const handleDelete = async () => {
     await fetch(`/api/ingredients/${id}`, { method: "DELETE" });

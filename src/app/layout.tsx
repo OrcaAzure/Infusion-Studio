@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { isAlchemyWeb } from "@/lib/alchemy-theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,8 +42,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#059669" },
-    { media: "(prefers-color-scheme: dark)", color: "#064e3b" },
+    { media: "(prefers-color-scheme: light)", color: "#2d6a4f" },
+    { media: "(prefers-color-scheme: dark)", color: "#060a08" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -55,10 +56,12 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const alchemy = isAlchemyWeb();
+
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased${alchemy ? " theme-alchemy" : ""}`}
       suppressHydrationWarning
     >
       <body

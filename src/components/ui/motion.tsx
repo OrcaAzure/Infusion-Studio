@@ -1,6 +1,15 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { usePathname } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
+
+export const SNAPPY_EASE = [0.25, 0.1, 0.25, 1] as const;
+export const SOFT_EASE = [0.22, 1, 0.36, 1] as const;
+
+/** Cap stagger so long lists don't cascade slowly on every tab visit. */
+export function staggerDelay(index: number, step = 0.035, max = 0.14) {
+  return Math.min(index * step, max);
+}
 
 interface FadeInProps {
   children: React.ReactNode;
@@ -9,11 +18,17 @@ interface FadeInProps {
 }
 
 export function FadeIn({ children, delay = 0, className }: FadeInProps) {
+  const reduce = useReducedMotion();
+
+  if (reduce) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay, ease: "easeOut" }}
+      transition={{ duration: 0.24, delay, ease: SOFT_EASE }}
       className={className}
     >
       {children}
@@ -21,14 +36,41 @@ export function FadeIn({ children, delay = 0, className }: FadeInProps) {
   );
 }
 
+/** Fast enter on tab change — no exit wait, navigation stays instant. */
+export function PageTransition({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const reduce = useReducedMotion();
+
+  if (reduce) {
+    return <>{children}</>;
+  }
+
+  return (
+    <motion.div
+      key={pathname}
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2, ease: SNAPPY_EASE }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export function StaggerContainer({ children, className }: { children: React.ReactNode; className?: string }) {
+  const reduce = useReducedMotion();
+
+  if (reduce) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
     <motion.div
       initial="hidden"
       animate="visible"
       variants={{
         hidden: {},
-        visible: { transition: { staggerChildren: 0.08 } },
+        visible: { transition: { staggerChildren: 0.045, delayChildren: 0.04 } },
       }}
       className={className}
     >
@@ -38,11 +80,17 @@ export function StaggerContainer({ children, className }: { children: React.Reac
 }
 
 export function StaggerItem({ children, className }: { children: React.ReactNode; className?: string }) {
+  const reduce = useReducedMotion();
+
+  if (reduce) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
     <motion.div
       variants={{
-        hidden: { opacity: 0, y: 16 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.35 } },
+        hidden: { opacity: 0, y: 12 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.24, ease: SOFT_EASE } },
       }}
       className={className}
     >
@@ -51,13 +99,28 @@ export function StaggerItem({ children, className }: { children: React.ReactNode
   );
 }
 
-export function PageTransition({ children }: { children: React.ReactNode }) {
+/** Single grid/list cell — capped delay by index. */
+export function MotionItem({
+  children,
+  index = 0,
+  className,
+}: {
+  children: React.ReactNode;
+  index?: number;
+  className?: string;
+}) {
+  const reduce = useReducedMotion();
+
+  if (reduce) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -8 }}
-      transition={{ duration: 0.3 }}
+      transition={{ delay: staggerDelay(index), duration: 0.22, ease: SOFT_EASE }}
+      className={className}
     >
       {children}
     </motion.div>

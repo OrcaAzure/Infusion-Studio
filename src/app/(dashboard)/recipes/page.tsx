@@ -17,11 +17,13 @@ import { useTimerStore } from "@/stores";
 import { formatTime } from "@/lib/utils";
 import { appPath } from "@/lib/app-path";
 import { blendPath } from "@/lib/entity-path";
+import { useToast } from "@/components/ui/toast";
 import { isOfflineDemo } from "@/lib/offline-demo/api";
 import type { RecipeWithBlend, BrewLogEntry } from "@/types";
 
 export default function RecipesPage() {
   const router = useRouter();
+  const toast = useToast((s) => s.show);
   const [recipes, setRecipes] = useState<RecipeWithBlend[]>([]);
   const [loading, setLoading] = useState(true);
   const [shareRecipe, setShareRecipe] = useState<RecipeWithBlend | null>(null);
@@ -73,15 +75,18 @@ export default function RecipesPage() {
   };
 
   const rateRecipe = async (recipe: RecipeWithBlend, rating: number) => {
-    await fetch(`/api/recipes/${recipe.id}`, {
+    const res = await fetch(`/api/recipes/${recipe.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ rating }),
     });
-    fetchRecipes();
-    if (detailRecipe?.id === recipe.id) {
-      setDetailRecipe({ ...recipe, rating });
+    if (!res.ok) {
+      toast("Failed to save rating");
+      return;
     }
+    const updated = await res.json();
+    setDetailRecipe(updated);
+    fetchRecipes();
   };
 
   const handleShare = (recipe: RecipeWithBlend) => {
@@ -219,11 +224,12 @@ export default function RecipesPage() {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-stone-400">
-              Brewed {detailRecipe.brewCount} times
-              {detailRecipe.lastBrewed &&
-                ` · Last: ${new Date(detailRecipe.lastBrewed).toLocaleDateString()}`}
-            </p>
+            {detailRecipe.lastBrewed && (
+              <p className="text-xs text-stone-400">
+                Last brewed {format(new Date(detailRecipe.lastBrewed), "dd MMM yyyy")} · Brewed{" "}
+                {detailRecipe.brewCount} time{detailRecipe.brewCount !== 1 ? "s" : ""}
+              </p>
+            )}
 
             {brewLogs.length > 0 && (
               <div>

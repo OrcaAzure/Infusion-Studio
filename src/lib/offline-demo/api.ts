@@ -183,6 +183,12 @@ export async function handleOfflineRequest(
     return log ? json(log, 201) : json({ error: "Invalid brew log" }, 400);
   }
 
+  const brewLogMatch = path.match(/^\/api\/brew-logs\/([^/]+)$/);
+  if (brewLogMatch && method === "PATCH") {
+    const updated = offlineStore.updateBrewLog(brewLogMatch[1], (body.notes as string) ?? null);
+    return updated ? json(updated) : json({ error: "Not found" }, 404);
+  }
+
   const likeMatch = path.match(/^\/api\/discover\/([^/]+)\/like$/);
   if (likeMatch) {
     const recipeId = likeMatch[1];

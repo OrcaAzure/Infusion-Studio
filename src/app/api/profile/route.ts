@@ -25,14 +25,17 @@ export async function PUT(request: Request) {
   const body = await request.json();
   const { socialHandle, name } = body as { socialHandle?: string; name?: string };
 
-  const data: { socialHandle?: string; name?: string } = {};
+  const data: { socialHandle?: string | null; name?: string } = {};
 
   if (socialHandle !== undefined) {
     const handle = socialHandle.replace(/^@/, "").toLowerCase().trim();
-    if (!handle || handle.length < 3) {
+    if (!handle) {
+      data.socialHandle = null;
+    } else if (handle.length < 3) {
       return NextResponse.json({ error: "Handle must be at least 3 characters" }, { status: 400 });
+    } else {
+      data.socialHandle = handle;
     }
-    data.socialHandle = handle;
   }
 
   if (name !== undefined) {

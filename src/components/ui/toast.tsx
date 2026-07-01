@@ -26,10 +26,11 @@ export function ToastHost() {
     <AnimatePresence>
       {message && (
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 16 }}
-          className="fixed bottom-20 left-1/2 z-[200] flex -translate-x-1/2 items-center gap-2 rounded-full bg-stone-900 px-4 py-2.5 text-sm font-medium text-white shadow-lg dark:bg-stone-100 dark:text-stone-900"
+          initial={{ opacity: 0, y: 12, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 8, scale: 0.98 }}
+          transition={{ type: "spring", stiffness: 420, damping: 28 }}
+          className="fixed bottom-20 left-1/2 z-[200] flex -translate-x-1/2 items-center gap-2 rounded-full border border-stone-700/20 bg-stone-900/95 px-4 py-2.5 text-sm font-medium text-white shadow-xl backdrop-blur-md dark:border-stone-300/20 dark:bg-stone-100/95 dark:text-stone-900"
         >
           <CheckCircle2 className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />
           {message}

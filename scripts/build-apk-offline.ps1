@@ -34,11 +34,12 @@ $hadApi = Test-Path $apiDir
 
 try {
     if ($hadMiddleware) {
-        Move-Item $middleware $middlewareBak -Force
+        Rename-Item -Path $middleware -NewName "middleware.ts.offline-bak" -Force
         Write-Host "Temporarily disabled middleware for static export"
     }
     if ($hadApi) {
-        Move-Item $apiDir $apiBak -Force
+        if (Test-Path $apiBak) { Remove-Item $apiBak -Recurse -Force }
+        Rename-Item -Path $apiDir -NewName "_api.offline-bak" -Force
         Write-Host "Temporarily excluded API routes for static export"
     }
 
@@ -54,6 +55,7 @@ try {
     Write-Host "Building static app..." -ForegroundColor Cyan
     npx prisma generate
     npx next build
+    if ($LASTEXITCODE -ne 0) { throw "next build failed with exit code $LASTEXITCODE" }
 
     $indexHtml = Join-Path $Root "out\index.html"
     if (-not (Test-Path $indexHtml)) {
@@ -91,13 +93,14 @@ try {
     Write-Host "She can install and use the app with no internet. Changes save on-device only." -ForegroundColor Yellow
 }
 finally {
-    if ($hadApi -and (Test-Path $apiBak)) {
-        if (Test-Path $apiDir) { Remove-Item $apiDir -Recurse -Force }
-        Move-Item $apiBak $apiDir -Force
+    if (Test-Path $apiBak) {
+        if (Test-Path $apiDir) { Remove-Item $apiDir -Recurse -Force -ErrorAction SilentlyContinue }
+        Rename-Item -Path $apiBak -NewName "api" -Force
         Write-Host "Restored API routes"
     }
-    if ($hadMiddleware -and (Test-Path $middlewareBak)) {
-        Move-Item $middlewareBak $middleware -Force
+    if (Test-Path $middlewareBak) {
+        if (Test-Path $middleware) { Remove-Item $middleware -Force -ErrorAction SilentlyContinue }
+        Rename-Item -Path $middlewareBak -NewName "middleware.ts" -Force
         Write-Host "Restored middleware"
     }
     Remove-Item Env:OFFLINE_BUILD -ErrorAction SilentlyContinue

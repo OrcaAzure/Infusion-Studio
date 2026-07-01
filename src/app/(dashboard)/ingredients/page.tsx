@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { AppLink } from "@/components/ui/app-link";
 import { Plus, Leaf } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
@@ -11,8 +12,10 @@ import { IngredientCsvImport } from "@/components/ingredients/ingredient-csv-imp
 import { Button } from "@/components/ui/button";
 import { LoadingSpinner, EmptyState } from "@/components/ui/empty-state";
 import type { IngredientWithMeta } from "@/types";
+import { isOfflineDemo } from "@/lib/offline-demo/api";
 
 function IngredientsContent() {
+  const { status } = useSession();
   const searchParams = useSearchParams();
   const initialCategory = searchParams.get("category") ?? "";
   const [ingredients, setIngredients] = useState<IngredientWithMeta[]>([]);
@@ -36,13 +39,14 @@ function IngredientsContent() {
   );
 
   useEffect(() => {
+    if (!isOfflineDemo() && status === "loading") return;
     fetchIngredients({
       search: "",
       category: initialCategory,
       sortBy: "name",
       sortOrder: "asc",
     });
-  }, [fetchIngredients, initialCategory]);
+  }, [fetchIngredients, initialCategory, status]);
 
   return (
     <>

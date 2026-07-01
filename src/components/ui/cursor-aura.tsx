@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { GLOW_COLORS } from "@/lib/utils";
 
 const DEFAULT_COLOR = GLOW_COLORS.brand;
 const INFLUENCE_RADIUS = 200;
+const COLOR_INTERVAL_MS = 100;
 
 function hexToRgb(hex: string) {
   const h = hex.replace("#", "");
@@ -15,69 +16,131 @@ function hexToRgb(hex: string) {
   };
 }
 
-/** Soft cursor glow that shifts color near category-tagged elements */
-export function CursorAura() {
-  const [pos, setPos] = useState({ x: -100, y: -100 });
-  const [color, setColor] = useState(DEFAULT_COLOR);
-  const [active, setActive] = useState(false);
+function pickGlowColor(clientX: number, clientY: number, elements: Element[]) {
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let weightSum = 0;
 
-  const handleMove = useCallback((e: MouseEvent) => {
-    setPos({ x: e.clientX, y: e.clientY });
-    setActive(true);
+  for (const el of elements) {
+    const rect = el.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const dist = Math.hypot(clientX - cx, clientY - cy);
 
-    const elements = document.querySelectorAll("[data-glow-color]");
-    let r = 0;
-    let g = 0;
-    let b = 0;
-    let weightSum = 0;
-
-    elements.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
-
-      if (dist < INFLUENCE_RADIUS) {
-        const weight = Math.pow(1 - dist / INFLUENCE_RADIUS, 2);
-        const hex = el.getAttribute("data-glow-color") ?? DEFAULT_COLOR;
-        const rgb = hexToRgb(hex);
-        r += rgb.r * weight;
-        g += rgb.g * weight;
-        b += rgb.b * weight;
-        weightSum += weight;
-      }
-    });
-
-    if (weightSum > 0) {
-      setColor(
-        `rgb(${Math.round(r / weightSum)}, ${Math.round(g / weightSum)}, ${Math.round(b / weightSum)})`
-      );
-    } else {
-      setColor(DEFAULT_COLOR);
+    if (dist < INFLUENCE_RADIUS) {
+      const weight = Math.pow(1 - dist / INFLUENCE_RADIUS, 2);
+      const hex = el.getAttribute("data-glow-color") ?? DEFAULT_COLOR;
+      const rgb = hexToRgb(hex);
+      r += rgb.r * weight;
+      g += rgb.g * weight;
+      b += rgb.b * weight;
+      weightSum += weight;
     }
-  }, []);
+  }
+
+  if (weightSum > 0) {
+    return `rgb(${Math.round(r / weightSum)}, ${Math.round(g / weightSum)}, ${Math.round(b / weightSum)})`;
+  }
+  return DEFAULT_COLOR;
+}
+
+/** Soft pointer glow — rAF + transform only (no per-frame React state). */
+export function CursorAura() {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const outerRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+  const pos = useRef({ x: -100, y: -100 });
+  const raf = useRef<number | null>(null);
+  const glowEls = useRef<Element[]>([]);
+  const lastColorAt = useRef(0);
+  const frame = useRef(0);
+  const visible = useRef(false);
 
   useEffect(() => {
-    // Skip on touch-only devices
-    if (window.matchMedia("(pointer: coarse)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    window.addEventListener("mousemove", handleMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMove);
-  }, [handleMove]);
+    const refreshEls = () => {
+      glowEls.current = Array.from(document.querySelectorAll("[data-glow-color]"));
+    };
+    refreshEls();
 
-  if (!active) return null;
+    const applyPosition = () => {
+      const { x, y } = pos.current;
+      const transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%)`;
+      if (outerRef.current) outerRef.current.style.transform = transform;
+      if (innerRef.current) innerRef.current.style.transform = transform;
+    };
+
+    const schedule = () => {
+      if (raf.current != null) return;
+      raf.current = requestAnimationFrame(() => {
+        raf.current = null;
+        frame.current += 1;
+
+        if (!visible.current && rootRef.current) {
+          visible.current = true;
+          rootRef.current.style.opacity = "1";
+        }
+
+        if (frame.current % 90 === 0) refreshEls();
+
+        applyPosition();
+
+        const now = performance.now();
+        if (now - lastColorAt.current >= COLOR_INTERVAL_MS) {
+          lastColorAt.current = now;
+          const color = pickGlowColor(pos.current.x, pos.current.y, glowEls.current);
+          if (outerRef.current) outerRef.current.style.backgroundColor = color;
+          if (innerRef.current) innerRef.current.style.backgroundColor = color;
+        }
+      });
+    };
+
+    const onPointer = (x: number, y: number) => {
+      pos.current = { x, y };
+      schedule();
+    };
+
+    const onMouse = (e: MouseEvent) => onPointer(e.clientX, e.clientY);
+    const onTouch = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch) onPointer(touch.clientX, touch.clientY);
+    };
+
+    window.addEventListener("mousemove", onMouse, { passive: true });
+    window.addEventListener("touchstart", onTouch, { passive: true });
+    window.addEventListener("touchmove", onTouch, { passive: true });
+
+    return () => {
+      window.removeEventListener("mousemove", onMouse);
+      window.removeEventListener("touchstart", onTouch);
+      window.removeEventListener("touchmove", onTouch);
+      if (raf.current != null) cancelAnimationFrame(raf.current);
+    };
+  }, []);
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden" aria-hidden>
-      {/* Large ambient glow */}
+    <div
+      ref={rootRef}
+      className="pointer-events-none fixed inset-0 z-[9999] overflow-hidden opacity-0 transition-opacity duration-300"
+      aria-hidden
+    >
       <div
-        className="absolute h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-30 blur-3xl transition-[background-color] duration-500 ease-out"
-        style={{ left: pos.x, top: pos.y, backgroundColor: color }}
+        ref={outerRef}
+        className="absolute left-0 top-0 h-72 w-72 rounded-full opacity-30 blur-3xl will-change-transform"
+        style={{
+          backgroundColor: DEFAULT_COLOR,
+          transform: "translate3d(-100px, -100px, 0) translate(-50%, -50%)",
+        }}
       />
-      {/* Tighter core glow */}
       <div
-        className="absolute h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full opacity-50 blur-xl transition-[background-color] duration-300 ease-out"
-        style={{ left: pos.x, top: pos.y, backgroundColor: color }}
+        ref={innerRef}
+        className="absolute left-0 top-0 h-16 w-16 rounded-full opacity-55 blur-xl will-change-transform transition-[background-color] duration-150"
+        style={{
+          backgroundColor: DEFAULT_COLOR,
+          transform: "translate3d(-100px, -100px, 0) translate(-50%, -50%)",
+        }}
       />
     </div>
   );

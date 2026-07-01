@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { FadeIn } from "@/components/ui/motion";
 import {
   LayoutDashboard,
   Leaf,
@@ -47,6 +49,59 @@ function normalizePath(path: string) {
   return path.replace(/\/$/, "") || "/";
 }
 
+function NavLink({
+  href,
+  label,
+  icon: Icon,
+  tourId,
+  isActive,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  tourId?: string;
+  isActive: boolean;
+  onNavigate: () => void;
+}) {
+  return (
+    <AppLink
+      href={href}
+      data-tour={tourId}
+      onClick={onNavigate}
+      className={cn(
+        "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
+        isActive
+          ? "text-emerald-700 dark:text-emerald-300 [.theme-alchemy_&]:text-[var(--alchemy-gold)]"
+          : "text-stone-600 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-100 [.theme-alchemy_&]:text-stone-400 [.theme-alchemy_&]:hover:text-emerald-100"
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn(
+          "alchemy-nav-pill absolute inset-0 rounded-lg transition-[opacity,transform] duration-200 ease-out",
+          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-50"
+        )}
+      />
+      <span
+        aria-hidden
+        className={cn(
+          "alchemy-nav-accent absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-full transition-all duration-200 ease-out",
+          isActive ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0"
+        )}
+      />
+      <Icon
+        className={cn(
+          "relative z-10 h-4 w-4 transition-transform duration-200",
+          isActive && "text-emerald-600 dark:text-emerald-400 [.theme-alchemy_&]:text-[var(--alchemy-gold)]",
+          "group-hover:scale-110"
+        )}
+      />
+      <span className="relative z-10">{label}</span>
+    </AppLink>
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
@@ -54,27 +109,24 @@ export function Sidebar() {
   const offline = isOfflineDemo();
   const current = normalizePath(pathname);
 
+  const closeSidebar = () => setSidebarOpen(false);
+
   const renderNav = (items: typeof mainNavItems) =>
-    items.map(({ href, label, icon: Icon, tourId }) => {
+    items.map(({ href, label, icon, tourId }) => {
       const target = normalizePath(href);
       const isActive =
         current === target || (target !== "/dashboard" && current.startsWith(target + "/"));
       return (
-        <AppLink
-          key={href}
-          href={href}
-          data-tour={tourId}
-          onClick={() => setSidebarOpen(false)}
-          className={cn(
-            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-            isActive
-              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-              : "text-stone-600 hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800"
-          )}
-        >
-          <Icon className="h-4 w-4" />
-          {label}
-        </AppLink>
+        <div key={href}>
+          <NavLink
+            href={href}
+            label={label}
+            icon={icon}
+            tourId={tourId}
+            isActive={isActive}
+            onNavigate={closeSidebar}
+          />
+        </div>
       );
     });
 
@@ -86,7 +138,7 @@ export function Sidebar() {
           width={40}
           height={40}
           alt="Infusion Studio"
-          className="rounded-xl"
+          className="rounded-xl shadow-sm"
         />
         <div>
           <h1 className="text-lg font-bold text-stone-900 dark:text-stone-100">Infusion Studio</h1>
@@ -97,12 +149,25 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1">{renderNav(mainNavItems)}</nav>
 
       <nav className="mt-4 space-y-1 border-t border-stone-200 pt-4 dark:border-stone-700">
-        {renderNav(promoNavItems)}
+        {promoNavItems.map(({ href, label, icon }) => {
+          const target = normalizePath(href);
+          const isActive = current === target || current.startsWith(target + "/");
+          return (
+            <NavLink
+              key={href}
+              href={href}
+              label={label}
+              icon={icon}
+              isActive={isActive}
+              onNavigate={closeSidebar}
+            />
+          );
+        })}
       </nav>
 
       <div className="mt-auto space-y-4 border-t border-stone-200 pt-4 dark:border-stone-700">
         <ThemeToggle className="w-full justify-center" />
-        <AppLink href="/settings" onClick={() => setSidebarOpen(false)}>
+        <AppLink href="/settings" onClick={closeSidebar}>
           <Button
             variant="ghost"
             className="w-full justify-start gap-3 text-stone-600 dark:text-stone-400"
@@ -146,16 +211,23 @@ export function Sidebar() {
         {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-[2px] lg:hidden"
+            onClick={closeSidebar}
+          />
+        )}
+      </AnimatePresence>
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-stone-200/80 bg-white/80 p-4 backdrop-blur-xl transition-transform duration-300 dark:border-stone-700/80 dark:bg-stone-900/80",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r p-4 backdrop-blur-xl transition-transform duration-200 ease-out",
+          "alchemy-sidebar border-stone-200/80 bg-white/85 dark:border-stone-700/80 dark:bg-stone-900/85",
           "lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -178,14 +250,11 @@ export function DashboardHeader({
   icon?: LucideIcon;
 }) {
   return (
-    <div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
-      <div
-        className="min-w-0 flex-1"
-        style={{ paddingTop: "max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem))" }}
-      >
+    <FadeIn className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+      <div className="page-header-pt min-w-0 flex-1">
         <div className="flex items-start gap-3">
           {Icon && (
-            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
+            <div className="alchemy-icon-badge mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white">
               <Icon className="h-5 w-5" />
             </div>
           )}
@@ -204,6 +273,6 @@ export function DashboardHeader({
           {action}
         </div>
       )}
-    </div>
+    </FadeIn>
   );
 }

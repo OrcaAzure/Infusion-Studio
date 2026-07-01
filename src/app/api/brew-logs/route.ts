@@ -11,23 +11,38 @@ export async function GET(request: NextRequest) {
 
   const recipeId = request.nextUrl.searchParams.get("recipeId");
   const blendId = request.nextUrl.searchParams.get("blendId");
+  const cursor = request.nextUrl.searchParams.get("cursor");
 
   try {
+    const where = {
+      userId: user.id,
+      ...(recipeId ? { recipeId } : {}),
+      ...(blendId ? { blendId } : {}),
+    };
+
     const logs = await prisma.brewLog.findMany({
-      where: {
-        userId: user.id,
-        ...(recipeId ? { recipeId } : {}),
-        ...(blendId ? { blendId } : {}),
-      },
+      where,
       orderBy: { brewedAt: "desc" },
-      take: 50,
+      take: recipeId || blendId ? 50 : 51,
+      ...(cursor && !recipeId && !blendId
+        ? { cursor: { id: cursor }, skip: 1 }
+        : {}),
       include: {
         blend: { select: { id: true, name: true } },
         recipe: { select: { id: true, name: true } },
       },
     });
 
-    return NextResponse.json(logs);
+    if (recipeId || blendId) {
+      return NextResponse.json(logs);
+    }
+
+    const hasMore = logs.length > 50;
+    const page = hasMore ? logs.slice(0, 50) : logs;
+    return NextResponse.json({
+      logs: page,
+      nextCursor: hasMore ? page[49]?.id ?? null : null,
+    });
   } catch (err) {
     console.error("[API brew-logs GET]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

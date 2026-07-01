@@ -50,7 +50,8 @@ export default function SettingsPage() {
       body: JSON.stringify(data),
     });
     if (!res.ok) {
-      toast("Failed to save settings");
+      const err = await res.json().catch(() => ({}));
+      toast((err as { error?: string }).error ?? "Failed to save settings");
       return;
     }
     const updated = await res.json();
@@ -82,7 +83,7 @@ export default function SettingsPage() {
             id="socialHandle"
             label="Social handle"
             placeholder="oven_infusion"
-            {...register("socialHandle", { required: true })}
+            {...register("socialHandle")}
           />
           <p className="mt-1 text-xs text-stone-400">Shown as @handle on shared recipes</p>
         </div>
@@ -90,6 +91,28 @@ export default function SettingsPage() {
           Save settings
         </Button>
       </form>
+
+      <div className="mx-auto mt-8 max-w-md rounded-xl border border-stone-200 p-4 dark:border-stone-700">
+        <h2 className="mb-1 text-sm font-semibold text-stone-800 dark:text-stone-200">
+          App tour
+        </h2>
+        <p className="mb-3 text-sm text-stone-500">
+          Replay the walkthrough for pantry, blends, and timer.
+        </p>
+        <Button
+          variant="outline"
+          onClick={async () => {
+            const { clearOnboardingFlag, ONBOARDING_REPLAY_EVENT } = await import(
+              "@/components/providers/onboarding-tour"
+            );
+            await clearOnboardingFlag();
+            window.dispatchEvent(new Event(ONBOARDING_REPLAY_EVENT));
+            toast("App tour started");
+          }}
+        >
+          Replay app tour
+        </Button>
+      </div>
 
       {offline && (
         <div className="mx-auto mt-12 max-w-md rounded-xl border border-red-200 p-4 dark:border-red-900">

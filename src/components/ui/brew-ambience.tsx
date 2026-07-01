@@ -66,26 +66,36 @@ export function BrewAmbience() {
     });
 
     // Seed initial particles
-    for (let i = 0; i < 18; i++) particles.push(spawnBubble());
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 12; i++) particles.push(spawnBubble());
+    for (let i = 0; i < 8; i++) {
       const s = spawnSteam();
       s.y = Math.random() * canvas.height;
       particles.push(s);
     }
 
     let frame = 0;
+    let running = true;
+
+    const onVisibility = () => {
+      running = document.visibilityState === "visible";
+    };
+    document.addEventListener("visibilitychange", onVisibility);
 
     const draw = () => {
+      animationId = requestAnimationFrame(draw);
+      if (!running) return;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       frame++;
 
       // Spawn new particles periodically
-      if (frame % 40 === 0) particles.push(spawnBubble());
-      if (frame % 60 === 0) particles.push(spawnSteam());
+      if (frame % 55 === 0) particles.push(spawnBubble());
+      if (frame % 80 === 0) particles.push(spawnSteam());
 
       particles = particles.filter((p) => p.life < p.maxLife);
 
       const isDark = document.documentElement.classList.contains("dark");
+      const isAlchemy = document.documentElement.classList.contains("theme-alchemy");
 
       for (const p of particles) {
         p.life++;
@@ -107,7 +117,13 @@ export function BrewAmbience() {
             p.y,
             p.size
           );
-          const bubbleColor = isDark ? "180, 220, 200" : "16, 185, 129";
+          const bubbleColor = isAlchemy
+            ? isDark
+              ? "180, 210, 190"
+              : "64, 145, 108"
+            : isDark
+              ? "180, 220, 200"
+              : "16, 185, 129";
           grad.addColorStop(0, `rgba(${bubbleColor}, ${alpha * 0.6})`);
           grad.addColorStop(0.7, `rgba(${bubbleColor}, ${alpha * 0.2})`);
           grad.addColorStop(1, `rgba(${bubbleColor}, 0)`);
@@ -125,7 +141,13 @@ export function BrewAmbience() {
           ctx.stroke();
         } else {
           // Steam wisp
-          const steamColor = isDark ? "200, 210, 205" : "120, 140, 130";
+          const steamColor = isAlchemy
+            ? isDark
+              ? "201, 180, 120"
+              : "120, 140, 110"
+            : isDark
+              ? "200, 210, 205"
+              : "120, 140, 130";
           const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size);
           grad.addColorStop(0, `rgba(${steamColor}, ${alpha})`);
           grad.addColorStop(0.5, `rgba(${steamColor}, ${alpha * 0.4})`);
@@ -146,13 +168,13 @@ export function BrewAmbience() {
         }
       }
 
-      animationId = requestAnimationFrame(draw);
     };
 
     draw();
 
     return () => {
       cancelAnimationFrame(animationId);
+      document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("resize", resize);
     };
   }, []);

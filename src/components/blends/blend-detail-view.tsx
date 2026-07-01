@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { AppLink } from "@/components/ui/app-link";
 import {
   Heart,
@@ -10,6 +11,8 @@ import {
   Pencil,
   Trash2,
   Thermometer,
+  Download,
+  Copy,
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { CategoryBadge } from "@/components/ui/badge";
@@ -23,8 +26,9 @@ import { useToast } from "@/components/ui/toast";
 import { useTimerStore } from "@/stores";
 import { formatTime } from "@/lib/utils";
 import { appPath } from "@/lib/app-path";
-import { blendEditPath, ingredientPath } from "@/lib/entity-path";
+import { blendEditPath, blendPath, ingredientPath } from "@/lib/entity-path";
 import { recipeSchema } from "@/lib/validations/blend";
+import { isOfflineDemo } from "@/lib/offline-demo/api";
 import type { BlendWithIngredients } from "@/types";
 
 interface BlendDetail extends BlendWithIngredients {
@@ -34,12 +38,14 @@ interface BlendDetail extends BlendWithIngredients {
 
 export function BlendDetailView({ id }: { id: string }) {
   const router = useRouter();
+  const { status } = useSession();
   const toast = useToast((s) => s.show);
   const [blend, setBlend] = useState<BlendDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorited, setIsFavorited] = useState(false);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
   const [recipeName, setRecipeName] = useState("");
   const [recipeNotes, setRecipeNotes] = useState("");
   const [recipeError, setRecipeError] = useState("");
@@ -68,9 +74,10 @@ export function BlendDetailView({ id }: { id: string }) {
 
   useEffect(() => {
     if (!id) return;
+    if (!isOfflineDemo() && status === "loading") return;
     fetchBlend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, status]);
 
   if (!id) return <p>Blend not found</p>;
 
@@ -126,6 +133,57 @@ export function BlendDetailView({ id }: { id: string }) {
     router.push(appPath("/timer"));
   };
 
+  const exportBlend = () => {
+    if (!blend) return;
+    const data = {
+      name: blend.name,
+      description: blend.description,
+      brewTemp: blend.brewTemp ? `${blend.brewTemp}°C` : null,
+      brewTime: blend.brewTime ? formatTime(blend.brewTime) : null,
+      ingredients: blend.ingredients.map((bi) => ({
+        name: bi.ingredient.name,
+        category: bi.ingredient.category,
+        amount: bi.amount,
+        unit: bi.unit,
+      })),
+      exportedAt: new Date().toISOString(),
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${blend.name.toLowerCase().replace(/\s+/g, "-")}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const duplicateBlend = async () => {
+    if (!blend) return;
+    const res = await fetch("/api/blends", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: `Copy of ${blend.name}`,
+        description: blend.description,
+        brewTemp: blend.brewTemp,
+        brewTime: blend.brewTime,
+        ingredients: blend.ingredients.map((bi, i) => ({
+          ingredientId: bi.ingredientId,
+          amount: bi.amount,
+          unit: bi.unit,
+          order: i,
+        })),
+      }),
+    });
+    setShowDuplicateModal(false);
+    if (res.ok) {
+      const newBlend = await res.json();
+      router.push(blendPath(newBlend.id));
+    } else {
+      toast("Failed to duplicate blend");
+    }
+  };
+
   if (loading) return <LoadingSpinner />;
   if (!blend) return <p>Blend not found</p>;
 
@@ -143,10 +201,7 @@ export function BlendDetailView({ id }: { id: string }) {
   return (
     <div>
       <div className="mb-6 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div
-          className="min-w-0 flex-1"
-          style={{ paddingTop: "max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem))" }}
-        >
+        <div className="page-header-pt min-w-0 flex-1">
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
@@ -185,6 +240,24 @@ export function BlendDetailView({ id }: { id: string }) {
           </div>
         </div>
         <div className="flex shrink-0 gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={exportBlend}
+            aria-label="Export blend"
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setShowDuplicateModal(true)}
+            aria-label="Duplicate blend"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
           <AppLink href={blendEditPath(id)}>
             <Button variant="outline" size="icon" className="h-9 w-9" aria-label="Edit blend">
               <Pencil className="h-4 w-4" />
@@ -299,6 +372,16 @@ export function BlendDetailView({ id }: { id: string }) {
         variant="danger"
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
+      />
+
+      <ConfirmModal
+        isOpen={showDuplicateModal}
+        title="Duplicate blend?"
+        message={`Creates a copy named "Copy of ${blend?.name}"`}
+        confirmLabel="Duplicate"
+        variant="default"
+        onCancel={() => setShowDuplicateModal(false)}
+        onConfirm={duplicateBlend}
       />
     </div>
   );

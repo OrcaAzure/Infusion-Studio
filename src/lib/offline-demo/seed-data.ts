@@ -87,7 +87,7 @@ export type DemoState = {
     id: string;
     name: string;
     email: string;
-    socialHandle: string;
+    socialHandle: string | null;
   };
   ingredients: DemoIngredient[];
   blends: DemoBlend[];

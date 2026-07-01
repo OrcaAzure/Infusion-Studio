@@ -36,6 +36,8 @@ export interface DashboardStats {
   recentBlends: BlendWithIngredients[];
   categoryBreakdown: { category: string; count: number }[];
   totalInventoryValue: number;
+  brewStreak: number;
+  totalBrewsThisWeek: number;
 }
 
 export interface BlendCanvasItem {

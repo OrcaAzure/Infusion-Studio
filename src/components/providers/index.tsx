@@ -7,14 +7,14 @@ import { CursorAura } from "@/components/ui/cursor-aura";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { OfflineDemoProvider } from "./offline-demo-provider";
-import { AndroidBackButton } from "@/components/native/android-back-button";
 import { ToastHost } from "@/components/ui/toast";
 
 const offlineDemo = process.env.NEXT_PUBLIC_OFFLINE_DEMO === "true";
+const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
-const offlineSession = {
+const trialSession = {
   user: {
-    id: "demo-user",
+    id: "trial-user",
     name: "Trial User",
     email: "trial@trial.com",
   },
@@ -22,12 +22,13 @@ const offlineSession = {
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const bootstrapSession = offlineDemo || skipAuth ? trialSession : undefined;
+
   return (
-    <SessionProvider session={offlineDemo ? offlineSession : undefined}>
+    <SessionProvider session={bootstrapSession}>
       <ThemeProvider>
         <OfflineDemoProvider>
           {!offlineDemo && <ServiceWorkerRegister />}
-          <AndroidBackButton />
           <ToastHost />
           <CursorAura />
           {children}

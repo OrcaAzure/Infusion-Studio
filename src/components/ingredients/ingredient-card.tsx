@@ -2,7 +2,7 @@
 
 import { AppLink } from "@/components/ui/app-link";
 import { ingredientPath } from "@/lib/entity-path";
-import { motion } from "framer-motion";
+import { MotionItem } from "@/components/ui/motion";
 import { Package, ArrowRight } from "lucide-react";
 import { CategoryBadge, StatusBadge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -23,11 +23,7 @@ export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
   const notes = parseFlavorNotes(ingredient.flavorNotes);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-    >
+    <MotionItem index={index}>
       <AppLink href={ingredientPath(ingredient.id)}>
         <Card hover className="group h-full min-w-0">
           <div className="mb-3 flex items-start justify-between gap-2">
@@ -78,6 +74,6 @@ export function IngredientCard({ ingredient, index = 0 }: IngredientCardProps) {
           </div>
         </Card>
       </AppLink>
-    </motion.div>
+    </MotionItem>
   );
 }

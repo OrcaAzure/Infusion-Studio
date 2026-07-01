@@ -87,10 +87,20 @@ export function OvenInfusionCard({ recipe, featured }: OvenInfusionCardProps) {
             </p>
           )}
 
-          <div className="mb-3 flex flex-wrap gap-1">
-            {recipe.blend.ingredients.map((bi) => (
-              <CategoryBadge key={bi.id} category={bi.ingredient.category} />
-            ))}
+          <div className="mb-3">
+            <p className="text-sm text-stone-600 dark:text-stone-400">
+              {recipe.blend.ingredients
+                .slice(0, 3)
+                .map((bi) => bi.ingredient.name)
+                .join(", ")}
+              {recipe.blend.ingredients.length > 3 &&
+                ` +${recipe.blend.ingredients.length - 3} more`}
+            </p>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {recipe.blend.ingredients.map((bi) => (
+                <CategoryBadge key={bi.id} category={bi.ingredient.category} />
+              ))}
+            </div>
           </div>
 
           <div className="flex items-center justify-between border-t border-stone-100 pt-3 dark:border-stone-800">

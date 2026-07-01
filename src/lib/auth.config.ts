@@ -7,7 +7,8 @@ import { loginSchema } from "@/lib/validations/auth";
 if (
   process.env.SKIP_AUTH === "true" &&
   process.env.NODE_ENV === "production" &&
-  process.env.NEXT_PHASE !== "phase-production-build"
+  process.env.NEXT_PHASE !== "phase-production-build" &&
+  process.env.ALLOW_LOCAL_PREVIEW !== "true"
 ) {
   throw new Error("SKIP_AUTH must not be set in production");
 }

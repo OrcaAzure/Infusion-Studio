@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/get-session-user";
 import { prisma } from "@/lib/prisma";
+import { calcStreak } from "@/lib/brew-streak";
 
 export async function GET() {
   const user = await getSessionUser();
@@ -36,6 +37,8 @@ export async function GET() {
       recentBlends,
       categoryGroups,
       inventoryItems,
+      recentBrewLogs,
+      totalBrewsThisWeek,
     ] = await Promise.all([
       prisma.ingredient.count({ where: { userId } }),
       prisma.blend.count({ where: { userId } }),
@@ -62,6 +65,18 @@ export async function GET() {
         where: { userId, pricePerUnit: { not: null } },
         select: { quantity: true, pricePerUnit: true },
       }),
+      prisma.brewLog.findMany({
+        where: { userId },
+        orderBy: { brewedAt: "desc" },
+        take: 60,
+        select: { brewedAt: true },
+      }),
+      prisma.brewLog.count({
+        where: {
+          userId,
+          brewedAt: { gte: new Date(Date.now() - 7 * 86400000) },
+        },
+      }),
     ]);
 
     const categoryBreakdown = categoryGroups.map((g) => ({
@@ -83,6 +98,8 @@ export async function GET() {
       recentBlends,
       categoryBreakdown,
       totalInventoryValue,
+      brewStreak: calcStreak(recentBrewLogs),
+      totalBrewsThisWeek,
     });
   } catch (err) {
     console.error("[API dashboard]", err);

@@ -43,6 +43,48 @@ export function BrewTimer() {
   }, [isRunning, tick]);
 
   useEffect(() => {
+    let wakeLock: WakeLockSentinel | null = null;
+
+    async function acquireWakeLock() {
+      try {
+        if ("wakeLock" in navigator) {
+          wakeLock = await (
+            navigator as Navigator & {
+              wakeLock: { request: (type: "screen") => Promise<WakeLockSentinel> };
+            }
+          ).wakeLock.request("screen");
+        } else {
+          const { KeepAwake } = await import("@capacitor-community/keep-awake");
+          await KeepAwake.keepAwake();
+        }
+      } catch {
+        /* silent */
+      }
+    }
+
+    async function releaseWakeLock() {
+      try {
+        if (wakeLock) {
+          await wakeLock.release();
+          wakeLock = null;
+        } else {
+          const { KeepAwake } = await import("@capacitor-community/keep-awake");
+          await KeepAwake.allowSleep();
+        }
+      } catch {
+        /* silent */
+      }
+    }
+
+    if (isRunning) void acquireWakeLock();
+    else void releaseWakeLock();
+
+    return () => {
+      void releaseWakeLock();
+    };
+  }, [isRunning]);
+
+  useEffect(() => {
     if (!isComplete) {
       alertedRef.current = false;
       setShowLogPrompt(false);

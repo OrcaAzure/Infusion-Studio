@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import {
   Leaf,
   FlaskConical,
@@ -9,6 +10,7 @@ import {
   AlertTriangle,
   DollarSign,
   Package,
+  Flame,
 } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { StatCard, CategoryChart, lowStockSeverity, LOW_STOCK_STYLES } from "@/components/dashboard/stats";
@@ -20,17 +22,20 @@ import { AppLink } from "@/components/ui/app-link";
 import { formatCurrency, CATEGORY_LABELS } from "@/lib/utils";
 import { ingredientPath, blendPath } from "@/lib/entity-path";
 import type { DashboardStats } from "@/types";
+import { isOfflineDemo } from "@/lib/offline-demo/api";
 
 export default function DashboardPage() {
+  const { status } = useSession();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isOfflineDemo() && status === "loading") return;
     fetch("/api/dashboard")
       .then((r) => r.json())
       .then(setStats)
       .finally(() => setLoading(false));
-  }, []);
+  }, [status]);
 
   if (loading) return <LoadingSpinner />;
   if (!stats) return <p>Failed to load dashboard</p>;
@@ -53,11 +58,22 @@ export default function DashboardPage() {
         }
       />
 
-      <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
+      <div className="mb-8 grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-4">
         <StatCard title="Ingredients" value={stats.totalIngredients} icon={Leaf} index={0} href="/ingredients" />
         <StatCard title="Blends" value={stats.totalBlends} icon={FlaskConical} index={1} href="/blends" />
         <StatCard title="Recipes" value={stats.totalRecipes} icon={BookOpen} index={2} href="/recipes" />
         <StatCard title="Favorites" value={stats.favoriteCount} icon={Heart} index={3} href="/favorites" />
+        <StatCard
+          title="Brew streak"
+          value={
+            (stats.brewStreak ?? 0) === 0
+              ? "—"
+              : `${stats.brewStreak} day${stats.brewStreak !== 1 ? "s" : ""}`
+          }
+          icon={Flame}
+          index={4}
+          href="/brew-logs"
+        />
       </div>
 
       <Card className="mb-6">

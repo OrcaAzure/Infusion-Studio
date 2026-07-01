@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { MotionItem, SOFT_EASE } from "@/components/ui/motion";
 import { AppLink } from "@/components/ui/app-link";
 import { type LucideIcon, Filter } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -54,13 +55,9 @@ export function StatCard({
   );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-    >
+    <MotionItem index={index}>
       {href ? <AppLink href={href}>{inner}</AppLink> : inner}
-    </motion.div>
+    </MotionItem>
   );
 }
 
@@ -78,7 +75,12 @@ const CHART_COLORS = [
 ];
 
 export function CategoryChart({ data }: CategoryChartProps) {
+  const [isTouch, setIsTouch] = useState(false);
   const total = data.reduce((sum, d) => sum + d.count, 0) || 1;
+
+  useEffect(() => {
+    setIsTouch(window.matchMedia("(pointer: coarse)").matches);
+  }, []);
 
   return (
     <div className="space-y-3">
@@ -101,7 +103,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
                 )}
                 initial={{ width: 0 }}
                 animate={{ width: `${(item.count / total) * 100}%` }}
-                transition={{ duration: 0.6, delay: i * 0.1 }}
+                transition={{ duration: 0.45, delay: Math.min(i * 0.06, 0.24), ease: SOFT_EASE }}
               />
             </div>
           </div>
@@ -126,7 +128,7 @@ export function CategoryChart({ data }: CategoryChartProps) {
       {data.length > 0 && (
         <p className="mt-2 text-center text-xs text-stone-400 dark:text-stone-500">
           <span className="inline-flex items-center gap-1">
-            <Filter className="h-3 w-3" /> Tap a category to filter
+            <Filter className="h-3 w-3" /> {isTouch ? "Tap" : "Click"} a category to filter
           </span>
         </p>
       )}

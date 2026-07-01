@@ -1,4 +1,5 @@
 import type { Ingredient } from "@prisma/client";
+import { calcStreak } from "@/lib/brew-streak";
 import { findPairings } from "@/lib/pairings";
 import {
   createInitialDemoState,
@@ -113,7 +114,6 @@ function sharedRecipe(recipeId: string) {
 }
 
 const LOW_STOCK = 50;
-
 export const offlineStore = {
   getDashboard() {
     const ingredients = state.ingredients.filter((i) => i.userId === DEMO_USER_ID);
@@ -125,6 +125,9 @@ export const offlineStore = {
     for (const ing of ingredients) {
       categoryMap.set(ing.category, (categoryMap.get(ing.category) ?? 0) + 1);
     }
+
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const userLogs = state.brewLogs.filter((l) => l.userId === DEMO_USER_ID);
 
     return {
       totalIngredients: ingredients.length,
@@ -148,6 +151,8 @@ export const offlineStore = {
         (sum, i) => sum + i.quantity * (i.pricePerUnit ?? 0),
         0
       ),
+      brewStreak: calcStreak(userLogs),
+      totalBrewsThisWeek: userLogs.filter((l) => l.brewedAt >= weekAgo).length,
     };
   },
 
@@ -506,8 +511,13 @@ export const offlineStore = {
         .replace(/^@/, "")
         .toLowerCase()
         .trim();
-      if (handle.length < 3) return { error: "Handle must be at least 3 characters", status: 400 };
-      state.user.socialHandle = handle;
+      if (!handle) {
+        state.user.socialHandle = null;
+      } else if (handle.length < 3) {
+        return { error: "Handle must be at least 3 characters", status: 400 };
+      } else {
+        state.user.socialHandle = handle;
+      }
     }
     touch();
     return { socialHandle: state.user.socialHandle, name: state.user.name };
@@ -534,21 +544,52 @@ export const offlineStore = {
   listBrewLogs(params: URLSearchParams) {
     const recipeId = params.get("recipeId");
     const blendId = params.get("blendId");
+    const cursor = params.get("cursor");
     let logs = state.brewLogs.filter((l) => l.userId === DEMO_USER_ID);
     if (recipeId) logs = logs.filter((l) => l.recipeId === recipeId);
     if (blendId) logs = logs.filter((l) => l.blendId === blendId);
-    return logs
-      .sort((a, b) => b.brewedAt.localeCompare(a.brewedAt))
-      .slice(0, 50)
-      .map((log) => {
-        const blend = blendById(log.blendId);
-        const recipe = log.recipeId ? recipeById(log.recipeId) : null;
-        return {
-          ...log,
-          blend: blend ? { id: blend.id, name: blend.name } : undefined,
-          recipe: recipe ? { id: recipe.id, name: recipe.name } : null,
-        };
-      });
+    logs = logs.sort((a, b) => b.brewedAt.localeCompare(a.brewedAt));
+
+    const mapLog = (log: (typeof logs)[0]) => {
+      const blend = blendById(log.blendId);
+      const recipe = log.recipeId ? recipeById(log.recipeId) : null;
+      return {
+        ...log,
+        blend: blend ? { id: blend.id, name: blend.name } : null,
+        recipe: recipe ? { id: recipe.id, name: recipe.name } : null,
+      };
+    };
+
+    if (recipeId || blendId) {
+      return logs.slice(0, 50).map(mapLog);
+    }
+
+    let start = 0;
+    if (cursor) {
+      const idx = logs.findIndex((l) => l.id === cursor);
+      start = idx >= 0 ? idx + 1 : 0;
+    }
+    const page = logs.slice(start, start + 51);
+    const hasMore = page.length > 50;
+    const items = hasMore ? page.slice(0, 50) : page;
+    return {
+      logs: items.map(mapLog),
+      nextCursor: hasMore ? items[49]?.id ?? null : null,
+    };
+  },
+
+  updateBrewLog(id: string, notes: string | null) {
+    const log = state.brewLogs.find((l) => l.id === id && l.userId === DEMO_USER_ID);
+    if (!log) return null;
+    log.notes = notes;
+    touch();
+    const blend = blendById(log.blendId);
+    const recipe = log.recipeId ? recipeById(log.recipeId) : null;
+    return {
+      ...log,
+      blend: blend ? { id: blend.id, name: blend.name } : null,
+      recipe: recipe ? { id: recipe.id, name: recipe.name } : null,
+    };
   },
 
   createBrewLog(data: Record<string, unknown>) {

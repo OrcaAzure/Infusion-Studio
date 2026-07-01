@@ -17,12 +17,12 @@ export function AndroidBackButton() {
     void import("@capacitor/app").then(({ App }) => {
       void App.addListener("backButton", () => {
         const path = window.location.pathname.replace(/\/$/, "") || "/";
-        const atHome = path === "/dashboard" || path === "";
+        const atHome = path === "/" || path === "/dashboard";
 
         if (window.history.length > 1 && !atHome) {
           router.back();
         } else if (!atHome) {
-          router.push(appPath("/dashboard"));
+          router.push(appPath("/"));
         } else {
           void App.minimizeApp();
         }

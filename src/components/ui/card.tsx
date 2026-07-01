@@ -35,12 +35,12 @@ export function Card({
       <div
         data-glow-color={color}
         className={cn(
-          "relative min-w-0 rounded-xl border border-stone-200/80 bg-white/85 p-4 shadow-sm backdrop-blur-md sm:p-6",
-          "ring-1 ring-white/40 dark:border-stone-700/80 dark:bg-stone-900/85 dark:ring-white/5",
+          "relative min-w-0 rounded-xl border p-4 shadow-sm backdrop-blur-md sm:p-6",
+          "alchemy-card border-stone-200/80 bg-white/85 ring-1 ring-white/40 dark:border-stone-700/80 dark:bg-stone-900/85 dark:ring-white/5",
           "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit]",
           "before:bg-[radial-gradient(ellipse_at_50%_-20%,var(--card-glow-inner),transparent_55%)] before:opacity-60",
           hover &&
-            "transition-all duration-300 hover:border-emerald-200/80 hover:shadow-lg hover:shadow-emerald-500/10 dark:hover:border-emerald-800/80",
+            "ui-lift transition-all duration-300 hover:border-emerald-200/80 hover:shadow-lg hover:shadow-emerald-500/12 dark:hover:border-emerald-800/80",
           className
         )}
         style={{ "--card-glow-inner": `${color}33` } as CSSProperties}
