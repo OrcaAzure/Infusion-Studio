@@ -134,7 +134,7 @@ export function BrewLogPrompt({ isOpen, onClose }: BrewLogPromptProps) {
         <Button variant="outline" onClick={handleSkip}>
           Skip
         </Button>
-        <Button onClick={handleSave} isLoading={saving}>
+        <Button onClick={handleSave} isLoading={saving} data-testid="brew-log-save">
           Save to brew log
         </Button>
       </div>

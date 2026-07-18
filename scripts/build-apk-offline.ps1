@@ -25,8 +25,8 @@ Write-Host "Demo data is bundled - no network or server needed." -ForegroundColo
 
 Push-Location $Root
 
-$middleware = Join-Path $Root "src\middleware.ts"
-$middlewareBak = Join-Path $Root "src\middleware.ts.offline-bak"
+$middleware = Join-Path $Root "src\proxy.ts"
+$middlewareBak = Join-Path $Root "src\proxy.ts.offline-bak"
 $apiDir = Join-Path $Root "src\app\api"
 $apiBak = Join-Path $Root "src\app\_api.offline-bak"
 $hadMiddleware = Test-Path $middleware
@@ -34,8 +34,8 @@ $hadApi = Test-Path $apiDir
 
 try {
     if ($hadMiddleware) {
-        Rename-Item -Path $middleware -NewName "middleware.ts.offline-bak" -Force
-        Write-Host "Temporarily disabled middleware for static export"
+        Rename-Item -Path $middleware -NewName "proxy.ts.offline-bak" -Force
+        Write-Host "Temporarily disabled proxy for static export"
     }
     if ($hadApi) {
         if (Test-Path $apiBak) { Remove-Item $apiBak -Recurse -Force }
@@ -100,8 +100,8 @@ finally {
     }
     if (Test-Path $middlewareBak) {
         if (Test-Path $middleware) { Remove-Item $middleware -Force -ErrorAction SilentlyContinue }
-        Rename-Item -Path $middlewareBak -NewName "middleware.ts" -Force
-        Write-Host "Restored middleware"
+        Rename-Item -Path $middlewareBak -NewName "proxy.ts" -Force
+        Write-Host "Restored proxy"
     }
     Remove-Item Env:OFFLINE_BUILD -ErrorAction SilentlyContinue
     Pop-Location

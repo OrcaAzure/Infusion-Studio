@@ -69,6 +69,7 @@ export function WelcomePage() {
                   <Button
                     size="lg"
                     className="alchemy-btn-primary min-w-[220px] gap-2 border-0 text-white"
+                    data-testid="welcome-enter-lab"
                   >
                     Enter the laboratory
                     <ArrowRight className="h-4 w-4" />

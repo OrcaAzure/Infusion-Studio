@@ -29,6 +29,9 @@ function hmsFromSeconds(total: number) {
 export default function TimerPage() {
   const setDuration = useTimerStore((s) => s.setDuration);
   const initialSeconds = useTimerStore((s) => s.initialSeconds);
+  const blendName = useTimerStore((s) => s.blendName);
+  const blendId = useTimerStore((s) => s.blendId);
+  const recipeId = useTimerStore((s) => s.recipeId);
   const [activePresetLabel, setActivePresetLabel] = useState<string | null>(null);
 
   const [hms, setHms] = useState(() => hmsFromSeconds(300));
@@ -36,7 +39,10 @@ export default function TimerPage() {
   const setCustomDuration = () => {
     const total = secondsFromHms(hms.h, hms.m, hms.s);
     if (total < 1) return;
-    setDuration(total, "Custom brew");
+    setDuration(total, blendName || "Custom brew", {
+      blendId: blendId ?? undefined,
+      recipeId: recipeId ?? undefined,
+    });
     setActivePresetLabel(null);
     setHms(hmsFromSeconds(total));
   };
@@ -77,9 +83,10 @@ export default function TimerPage() {
               onChange={(s) => setHms((prev) => ({ ...prev, s }))}
               min={0}
               max={59}
+              data-testid="timer-seconds"
             />
           </div>
-          <Button onClick={setCustomDuration} className="w-full">
+          <Button onClick={setCustomDuration} className="w-full" data-testid="timer-set-duration">
             Set {formatTime(secondsFromHms(hms.h, hms.m, hms.s))}
           </Button>
         </div>
@@ -96,7 +103,10 @@ export default function TimerPage() {
                 size="sm"
                 className="flex h-auto flex-col gap-0.5 py-2"
                 onClick={() => {
-                  setDuration(preset.seconds, preset.label);
+                  setDuration(preset.seconds, preset.label, {
+                    blendId: blendId ?? undefined,
+                    recipeId: recipeId ?? undefined,
+                  });
                   setActivePresetLabel(preset.label);
                   setHms(hmsFromSeconds(preset.seconds));
                 }}

@@ -2,14 +2,14 @@
 $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 
-$middleware = Join-Path $Root "src\middleware.ts"
-$middlewareBak = Join-Path $Root "src\middleware.ts.offline-bak"
+$middleware = Join-Path $Root "src\proxy.ts"
+$middlewareBak = Join-Path $Root "src\proxy.ts.offline-bak"
 $apiDir = Join-Path $Root "src\app\api"
 $apiBak = Join-Path $Root "src\app\_api.offline-bak"
 
 try {
     if (Test-Path $middleware) {
-        Rename-Item -Path $middleware -NewName "middleware.ts.offline-bak" -Force
+        Rename-Item -Path $middleware -NewName "proxy.ts.offline-bak" -Force
     }
     if (Test-Path $apiDir) {
         if (Test-Path $apiBak) { Remove-Item $apiBak -Recurse -Force }
@@ -72,7 +72,7 @@ finally {
     }
     if (Test-Path $middlewareBak) {
         if (Test-Path $middleware) { Remove-Item $middleware -Force -ErrorAction SilentlyContinue }
-        Rename-Item -Path $middlewareBak -NewName "middleware.ts" -Force
+        Rename-Item -Path $middlewareBak -NewName "proxy.ts" -Force
     }
     Remove-Item Env:OFFLINE_BUILD -ErrorAction SilentlyContinue
     Remove-Item Env:NEXT_PUBLIC_OFFLINE_DEMO -ErrorAction SilentlyContinue

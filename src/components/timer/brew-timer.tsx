@@ -188,7 +188,7 @@ export function BrewTimer() {
 
       <div className="flex justify-center gap-3">
         {!isRunning && !isComplete && (
-          <Button size="lg" onClick={handleStart}>
+          <Button size="lg" onClick={handleStart} data-testid="brew-timer-start">
             <Play className="h-5 w-5" />
             Start
           </Button>

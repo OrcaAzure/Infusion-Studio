@@ -366,7 +366,7 @@ export function BlendDetailView({ id }: { id: string }) {
         </div>
       </Card>
 
-      <Button size="lg" className="w-full sm:w-auto" onClick={startTimer}>
+          <Button size="lg" className="w-full sm:w-auto" onClick={startTimer} data-testid="blend-start-timer">
         <Timer className="h-5 w-5" />
         Start brew timer
       </Button>
