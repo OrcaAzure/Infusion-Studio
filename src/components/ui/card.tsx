@@ -24,7 +24,7 @@ export function Card({
         <div
           aria-hidden
           className={cn(
-            "pointer-events-none absolute -inset-1 rounded-2xl opacity-40 blur-2xl transition-all duration-500",
+            "pointer-events-none absolute -inset-1 rounded-3xl opacity-40 blur-2xl transition-all duration-500",
             "bg-[radial-gradient(ellipse_at_50%_0%,var(--card-glow),transparent_65%)]",
             hover && "group-hover:opacity-70 group-hover:blur-3xl"
           )}
@@ -35,7 +35,7 @@ export function Card({
       <div
         data-glow-color={color}
         className={cn(
-          "relative min-w-0 rounded-xl border p-4 shadow-sm backdrop-blur-md sm:p-6",
+          "relative min-w-0 rounded-2xl border p-4 shadow-sm backdrop-blur-md sm:p-6",
           "alchemy-card border-stone-200/80 bg-white/85 ring-1 ring-white/40 dark:border-stone-700/80 dark:bg-stone-900/85 dark:ring-white/5",
           "before:pointer-events-none before:absolute before:inset-0 before:rounded-[inherit]",
           "before:bg-[radial-gradient(ellipse_at_50%_-20%,var(--card-glow-inner),transparent_55%)] before:opacity-60",

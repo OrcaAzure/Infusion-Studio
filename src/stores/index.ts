@@ -154,3 +154,18 @@ export const useUIStore = create<UIState>()((set) => ({
   toggleSidebar: () => set((s) => ({ sidebarOpen: !s.sidebarOpen })),
   setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
 }));
+
+interface PreferencesState {
+  alchemyOnApk: boolean;
+  setAlchemyOnApk: (enabled: boolean) => void;
+}
+
+export const usePreferencesStore = create<PreferencesState>()(
+  persist(
+    (set) => ({
+      alchemyOnApk: false,
+      setAlchemyOnApk: (alchemyOnApk) => set({ alchemyOnApk }),
+    }),
+    { name: "infusion-preferences" }
+  )
+);

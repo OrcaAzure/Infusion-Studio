@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import {
   Leaf,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 import { DashboardHeader } from "@/components/layout/sidebar";
 import { StatCard, CategoryChart, lowStockSeverity, LOW_STOCK_STYLES } from "@/components/dashboard/stats";
+import { LowStockShoppingList } from "@/components/dashboard/low-stock-shopping-list";
 import { Card, CardTitle } from "@/components/ui/card";
 import { LoadingSpinner } from "@/components/ui/empty-state";
 import { CategoryBadge } from "@/components/ui/badge";
@@ -21,23 +21,25 @@ import { Button } from "@/components/ui/button";
 import { AppLink } from "@/components/ui/app-link";
 import { formatCurrency, CATEGORY_LABELS } from "@/lib/utils";
 import { ingredientPath, blendPath } from "@/lib/entity-path";
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import type { DashboardStats } from "@/types";
 import { isOfflineDemo } from "@/lib/offline-demo/api";
 
 export default function DashboardPage() {
   const { status } = useSession();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const enabled = isOfflineDemo() || status !== "loading";
 
-  useEffect(() => {
-    if (!isOfflineDemo() && status === "loading") return;
-    fetch("/api/dashboard")
-      .then((r) => r.json())
-      .then(setStats)
-      .finally(() => setLoading(false));
-  }, [status]);
+  const { data: stats, loading } = useCachedFetch<DashboardStats>(
+    "dashboard",
+    async () => {
+      const r = await fetch("/api/dashboard");
+      if (!r.ok) throw new Error("Failed to load dashboard");
+      return r.json();
+    },
+    enabled
+  );
 
-  if (loading) return <LoadingSpinner />;
+  if (loading && !stats) return <LoadingSpinner />;
   if (!stats) return <p>Failed to load dashboard</p>;
 
   const categoryData = stats.categoryBreakdown.map((c) => ({
@@ -49,6 +51,7 @@ export default function DashboardPage() {
   return (
     <div>
       <DashboardHeader
+        label="Overview"
         title="Dashboard"
         description="Overview of your infusion studio"
         action={
@@ -106,26 +109,29 @@ export default function DashboardPage() {
             Low stock alerts
           </h3>
           {stats.lowStockItems.length > 0 ? (
-            <div className="space-y-2">
-              {stats.lowStockItems.map((item) => {
-                const severity = lowStockSeverity(item.quantity);
-                return (
-                <AppLink
-                  key={item.id}
-                  href={ingredientPath(item.id)}
-                  className={`flex min-w-0 items-center justify-between gap-2 rounded-lg border p-3 transition-colors ${LOW_STOCK_STYLES[severity]}`}
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-stone-900 dark:text-stone-100">{item.name}</p>
-                    <CategoryBadge category={item.category} />
-                  </div>
-                  <span className="shrink-0 text-sm font-medium text-amber-700 dark:text-amber-400">
-                    {item.quantity} {item.unit}
-                  </span>
-                </AppLink>
-                );
-              })}
-            </div>
+            <>
+              <div className="space-y-2">
+                {stats.lowStockItems.map((item) => {
+                  const severity = lowStockSeverity(item.quantity);
+                  return (
+                    <AppLink
+                      key={item.id}
+                      href={ingredientPath(item.id)}
+                      className={`flex min-w-0 items-center justify-between gap-2 rounded-lg border p-3 transition-colors ${LOW_STOCK_STYLES[severity]}`}
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-stone-900 dark:text-stone-100">{item.name}</p>
+                        <CategoryBadge category={item.category} />
+                      </div>
+                      <span className="shrink-0 text-sm font-medium text-amber-700 dark:text-amber-400">
+                        {item.quantity} {item.unit}
+                      </span>
+                    </AppLink>
+                  );
+                })}
+              </div>
+              <LowStockShoppingList items={stats.lowStockItems} />
+            </>
           ) : (
             <p className="text-sm text-stone-500">All ingredients are well stocked</p>
           )}

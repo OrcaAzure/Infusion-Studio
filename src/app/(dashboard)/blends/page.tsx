@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { AppLink } from "@/components/ui/app-link";
 import { blendPath } from "@/lib/entity-path";
@@ -12,26 +12,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { LoadingSpinner, EmptyState } from "@/components/ui/empty-state";
-import { StaggerContainer, StaggerItem } from "@/components/ui/motion";
+import { useCachedFetch } from "@/hooks/use-cached-fetch";
 import { isOfflineDemo } from "@/lib/offline-demo/api";
 import type { BlendWithIngredients } from "@/types";
 
 export default function BlendsPage() {
   const { status } = useSession();
-  const [blends, setBlends] = useState<BlendWithIngredients[]>([]);
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"updatedAt" | "name" | "ingredients">("updatedAt");
-  const [loading, setLoading] = useState(true);
+  const enabled = isOfflineDemo() || status !== "loading";
 
-  useEffect(() => {
-    if (!isOfflineDemo() && status === "loading") return;
-    fetch("/api/blends")
-      .then((r) => r.json())
-      .then(setBlends)
-      .finally(() => setLoading(false));
-  }, [status]);
+  const { data: blends, loading } = useCachedFetch<BlendWithIngredients[]>(
+    "blends",
+    async () => {
+      const r = await fetch("/api/blends");
+      if (!r.ok) throw new Error("Failed to load blends");
+      return r.json();
+    },
+    enabled
+  );
 
-  const visible = blends
+  const list = blends ?? [];
+
+  const visible = list
     .filter(
       (b) =>
         !search ||
@@ -47,6 +50,7 @@ export default function BlendsPage() {
   return (
     <div>
       <DashboardHeader
+        label="Crafting"
         title="My Blends"
         description="All your crafted infusion blends"
         action={
@@ -64,7 +68,7 @@ export default function BlendsPage() {
           placeholder="Search blends..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 transition-shadow duration-200 focus:shadow-md focus:shadow-emerald-500/10"
+          className="flex-1"
         />
         <Select
           value={sortBy}
@@ -78,9 +82,9 @@ export default function BlendsPage() {
         />
       </div>
 
-      {loading ? (
+      {loading && list.length === 0 ? (
         <LoadingSpinner />
-      ) : blends.length === 0 ? (
+      ) : list.length === 0 ? (
         <EmptyState
           icon={<FlaskConical className="h-6 w-6" />}
           title="No blends yet"
@@ -98,33 +102,29 @@ export default function BlendsPage() {
           description="Try a different name"
         />
       ) : (
-        <StaggerContainer className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((blend) => (
-            <StaggerItem key={blend.id}>
-              <AppLink href={blendPath(blend.id)} className="group block">
-                <Card hover className="h-full">
-                  <h3 className="mb-1 font-semibold text-stone-900 transition-colors group-hover:text-emerald-600 dark:text-stone-100 dark:group-hover:text-emerald-400">
-                    {blend.name}
-                  </h3>
-                  {blend.description && (
-                    <p className="mb-3 line-clamp-2 text-sm text-stone-500">
-                      {blend.description}
-                    </p>
-                  )}
-                  <div className="mb-3 flex flex-wrap gap-1">
-                    {blend.ingredients.slice(0, 4).map((bi) => (
-                      <CategoryBadge key={bi.id} category={bi.ingredient.category} />
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-stone-400">
-                    <span>{blend.ingredients.length} ingredients</span>
-                    {blend.brewTime && <span>{Math.floor(blend.brewTime / 60)}m brew</span>}
-                  </div>
-                </Card>
-              </AppLink>
-            </StaggerItem>
+            <AppLink key={blend.id} href={blendPath(blend.id)} className="group block">
+              <Card hover className="h-full">
+                <h3 className="mb-1 font-semibold text-stone-900 transition-colors group-hover:text-emerald-600 dark:text-stone-100 dark:group-hover:text-emerald-400">
+                  {blend.name}
+                </h3>
+                {blend.description && (
+                  <p className="mb-3 line-clamp-2 text-sm text-stone-500">{blend.description}</p>
+                )}
+                <div className="mb-3 flex flex-wrap gap-1">
+                  {blend.ingredients.slice(0, 4).map((bi) => (
+                    <CategoryBadge key={bi.id} category={bi.ingredient.category} />
+                  ))}
+                </div>
+                <div className="flex items-center justify-between text-xs text-stone-400">
+                  <span>{blend.ingredients.length} ingredients</span>
+                  {blend.brewTime && <span>{Math.floor(blend.brewTime / 60)}m brew</span>}
+                </div>
+              </Card>
+            </AppLink>
           ))}
-        </StaggerContainer>
+        </div>
       )}
     </div>
   );

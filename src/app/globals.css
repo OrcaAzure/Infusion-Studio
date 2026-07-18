@@ -216,6 +216,29 @@ body {
   padding-top: max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem));
 }
 
+.page-content-enter {
+  animation: page-content-enter 0.1s ease-out;
+}
+
+@keyframes page-content-enter {
+  from {
+    opacity: 0.94;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-content-enter {
+    animation: none;
+  }
+}
+
+.welcome-enter-lab {
+  view-transition-name: lab-stage;
+}
+
 /* UI motion utilities — GPU-friendly */
 @keyframes ui-float {
   0%,
@@ -370,4 +393,153 @@ body {
     color-mix(in srgb, var(--alchemy-gold) 25%, transparent),
     transparent 55%
   );
+}
+
+/* ── Fluid showcase layout (web) — rounded frames, floating panels ── */
+.theme-alchemy .fluid-canvas {
+  min-height: 100dvh;
+  padding: 0.625rem;
+  padding-top: max(0.625rem, env(safe-area-inset-top));
+  padding-bottom: max(0.625rem, env(safe-area-inset-bottom));
+}
+
+@media (min-width: 640px) {
+  .theme-alchemy .fluid-canvas {
+    padding: 1rem;
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 1024px) {
+  .theme-alchemy .fluid-canvas {
+    padding: 1.25rem;
+    padding-top: max(1.25rem, env(safe-area-inset-top));
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  }
+}
+
+.theme-alchemy .fluid-stage {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.75rem;
+  border: 1px solid color-mix(in srgb, var(--alchemy-gold) 16%, var(--border));
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--alchemy-gold) 10%, transparent) inset,
+    0 28px 72px -12px color-mix(in srgb, var(--alchemy-void) 18%, transparent);
+  min-height: calc(100dvh - 1.25rem);
+}
+
+@media (min-width: 1024px) {
+  .theme-alchemy .fluid-stage {
+    border-radius: 2rem;
+    min-height: calc(100dvh - 2.5rem);
+  }
+}
+
+.theme-alchemy.dark .fluid-stage {
+  background: color-mix(in srgb, var(--alchemy-void) 78%, var(--card));
+}
+
+.theme-alchemy .fluid-stage-inner {
+  padding: 1rem 1rem 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .theme-alchemy .fluid-stage-inner {
+    padding: 1.5rem 1.75rem 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .theme-alchemy .fluid-stage-inner {
+    padding: 1.75rem 2rem 2rem;
+  }
+}
+
+.theme-alchemy .fluid-inset {
+  border-radius: 1.25rem;
+  border: 1px solid color-mix(in srgb, var(--alchemy-gold) 12%, var(--border));
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.theme-alchemy.dark .fluid-inset {
+  background: color-mix(in srgb, var(--alchemy-void) 55%, transparent);
+}
+
+.theme-alchemy .fluid-sidebar {
+  top: max(0.625rem, env(safe-area-inset-top));
+  bottom: max(0.625rem, env(safe-area-inset-bottom));
+  left: 0.625rem;
+  height: auto;
+  border-radius: 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--alchemy-gold) 18%, var(--border));
+  border-right: 1px solid color-mix(in srgb, var(--alchemy-gold) 18%, var(--border));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--alchemy-gold) 8%, transparent) inset,
+    0 20px 48px -8px color-mix(in srgb, var(--alchemy-void) 22%, transparent);
+}
+
+@media (min-width: 1024px) {
+  .theme-alchemy .fluid-sidebar {
+    top: max(1.25rem, env(safe-area-inset-top));
+    bottom: max(1.25rem, env(safe-area-inset-bottom));
+    left: 1.25rem;
+    border-radius: 1.75rem;
+  }
+}
+
+.theme-alchemy .fluid-stage-compact {
+  min-height: auto;
+}
+
+.theme-alchemy .lab-top-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  padding-top: max(0.25rem, env(safe-area-inset-top));
+  padding-left: 2.75rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--alchemy-gold) 14%, var(--border));
+}
+
+@media (min-width: 1024px) {
+  .theme-alchemy .lab-top-bar {
+    padding-left: 0;
+    padding-top: 0;
+  }
+}
+
+.theme-alchemy .lab-page-header {
+  padding-top: 0;
+}
+
+.theme-alchemy .lab-mobile-nav-spacer {
+  height: calc(4.5rem + env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .theme-alchemy .lab-mobile-nav-spacer {
+    height: 0;
+  }
+}
+
+.lab-page-header {
+  padding-top: max(1.75rem, calc(env(safe-area-inset-top) + 1.25rem));
+}
+
+.theme-alchemy .alchemy-card {
+  border-radius: 1.25rem;
+}
+
+.theme-alchemy .alchemy-card::before {
+  border-radius: inherit;
 }

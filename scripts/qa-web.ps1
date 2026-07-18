@@ -24,17 +24,31 @@ function Test-Route($path, $expect = 200) {
 }
 
 Write-Host "Web QA against $base" -ForegroundColor Cyan
+
+# Public / marketing
 Test-Route "/"
+Test-Route "/login"
+Test-Route "/register"
+
+# Dashboard routes
 Test-Route "/dashboard"
 Test-Route "/ingredients"
+Test-Route "/ingredients/new"
 Test-Route "/blends"
+Test-Route "/blends/create"
 Test-Route "/timer"
 Test-Route "/brew-logs"
 Test-Route "/recipes"
+Test-Route "/favorites"
 Test-Route "/settings"
+Test-Route "/oven-infusion"
+Test-Route "/qa"
+
+# Dynamic detail pages
 Test-Route "/blends/seed-blend-1"
 Test-Route "/ingredients/seed-ing-1"
 
+# APIs
 $api = Invoke-RestMethod -Uri "$base/api/dashboard"
 if ($api.totalIngredients -gt 0) {
     Write-Host "OK   /api/dashboard -> totalIngredients=$($api.totalIngredients)" -ForegroundColor Green
@@ -48,6 +62,14 @@ if ($blends.Count -gt 0) {
     Write-Host "OK   /api/blends -> $($blends.Count) blends" -ForegroundColor Green
 } else {
     Write-Host "FAIL /api/blends -> no blends" -ForegroundColor Red
+    $fail++
+}
+
+$ingredients = Invoke-RestMethod -Uri "$base/api/ingredients"
+if ($ingredients.Count -gt 0) {
+    Write-Host "OK   /api/ingredients -> $($ingredients.Count) ingredients" -ForegroundColor Green
+} else {
+    Write-Host "FAIL /api/ingredients -> no ingredients" -ForegroundColor Red
     $fail++
 }
 

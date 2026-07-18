@@ -40,7 +40,7 @@ export function InstallPrompt() {
   };
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-[100] mx-auto max-w-md animate-in slide-in-from-bottom-4">
+    <div className="fixed bottom-20 left-4 right-4 z-[100] mx-auto max-w-md md:bottom-4">
       <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-white/95 p-4 shadow-xl backdrop-blur-md dark:border-emerald-800 dark:bg-stone-900/95">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white">
           <Download className="h-5 w-5" />

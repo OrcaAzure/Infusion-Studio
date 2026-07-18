@@ -44,6 +44,7 @@ export default function TimerPage() {
   return (
     <div>
       <DashboardHeader
+        label="Brewing"
         title="Brew Timer"
         description="Precision timing for the perfect infusion"
       />

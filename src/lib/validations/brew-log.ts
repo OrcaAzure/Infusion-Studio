@@ -4,6 +4,7 @@ export const brewLogSchema = z.object({
   blendId: z.string().min(1),
   recipeId: z.string().optional(),
   notes: z.string().max(500).optional(),
+  rating: z.number().int().min(1).max(5).optional(),
   brewedAt: z.coerce.date().optional(),
 });
 

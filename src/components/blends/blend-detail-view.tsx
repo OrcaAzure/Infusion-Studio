@@ -13,6 +13,7 @@ import {
   Thermometer,
   Download,
   Copy,
+  GitBranch,
 } from "lucide-react";
 import { Card, CardTitle } from "@/components/ui/card";
 import { CategoryBadge } from "@/components/ui/badge";
@@ -29,12 +30,13 @@ import { appPath } from "@/lib/app-path";
 import { blendEditPath, blendPath, ingredientPath } from "@/lib/entity-path";
 import { recipeSchema } from "@/lib/validations/blend";
 import { isOfflineDemo } from "@/lib/offline-demo/api";
+import { cacheInvalidate } from "@/lib/client-cache";
 import type { BlendWithIngredients } from "@/types";
 
-interface BlendDetail extends BlendWithIngredients {
+type BlendDetail = BlendWithIngredients & {
   favorites: { id: string }[];
   recipes: { id: string; name: string }[];
-}
+};
 
 export function BlendDetailView({ id }: { id: string }) {
   const router = useRouter();
@@ -46,6 +48,9 @@ export function BlendDetailView({ id }: { id: string }) {
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [showVersionModal, setShowVersionModal] = useState(false);
+  const [versionNotes, setVersionNotes] = useState("");
+  const [savingVersion, setSavingVersion] = useState(false);
   const [recipeName, setRecipeName] = useState("");
   const [recipeNotes, setRecipeNotes] = useState("");
   const [recipeError, setRecipeError] = useState("");
@@ -138,6 +143,7 @@ export function BlendDetailView({ id }: { id: string }) {
     const data = {
       name: blend.name,
       description: blend.description,
+      version: blend.version,
       brewTemp: blend.brewTemp ? `${blend.brewTemp}°C` : null,
       brewTime: blend.brewTime ? formatTime(blend.brewTime) : null,
       ingredients: blend.ingredients.map((bi) => ({
@@ -155,6 +161,27 @@ export function BlendDetailView({ id }: { id: string }) {
     a.download = `${blend.name.toLowerCase().replace(/\s+/g, "-")}.json`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const saveNewVersion = async () => {
+    if (!blend) return;
+    setSavingVersion(true);
+    const res = await fetch(`/api/blends/${id}/version`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ versionNotes }),
+    });
+    setSavingVersion(false);
+    setShowVersionModal(false);
+    setVersionNotes("");
+    if (res.ok) {
+      cacheInvalidate("blends");
+      const created = await res.json();
+      toast("New version saved");
+      router.push(blendPath(created.id));
+    } else {
+      toast("Failed to save version");
+    }
   };
 
   const duplicateBlend = async () => {
@@ -208,6 +235,11 @@ export function BlendDetailView({ id }: { id: string }) {
                 <h1 className="text-xl font-bold text-stone-900 sm:text-2xl dark:text-stone-100">
                   {blend.name}
                 </h1>
+                {blend.version && blend.version > 1 && (
+                  <span className="alchemy-label rounded-full border border-current px-2 py-0.5 text-[10px] font-medium uppercase">
+                    v{blend.version}
+                  </span>
+                )}
                 <div className="flex shrink-0 items-center gap-1">
                   <Button
                     variant="outline"
@@ -248,6 +280,15 @@ export function BlendDetailView({ id }: { id: string }) {
             aria-label="Export blend"
           >
             <Download className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-9 w-9"
+            onClick={() => setShowVersionModal(true)}
+            aria-label="Save as new version"
+          >
+            <GitBranch className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
@@ -373,6 +414,28 @@ export function BlendDetailView({ id }: { id: string }) {
         onCancel={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
       />
+
+      <Modal
+        isOpen={showVersionModal}
+        onClose={() => setShowVersionModal(false)}
+        title="Save as new version"
+      >
+        <p className="mb-4 text-sm text-stone-500">
+          Creates the next version in this blend&apos;s lineage — ingredients and brew settings are
+          copied.
+        </p>
+        <Textarea
+          label="Version notes"
+          placeholder="What changed in this version?"
+          value={versionNotes}
+          onChange={(e) => setVersionNotes(e.target.value)}
+          rows={3}
+          className="mb-4"
+        />
+        <Button onClick={saveNewVersion} isLoading={savingVersion} className="w-full">
+          Save version
+        </Button>
+      </Modal>
 
       <ConfirmModal
         isOpen={showDuplicateModal}

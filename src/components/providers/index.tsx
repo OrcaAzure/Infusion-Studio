@@ -7,6 +7,7 @@ import { CursorAura } from "@/components/ui/cursor-aura";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
 import { OfflineDemoProvider } from "./offline-demo-provider";
+import { AlchemyThemeBridge } from "./alchemy-theme-bridge";
 import { ToastHost } from "@/components/ui/toast";
 
 const offlineDemo = process.env.NEXT_PUBLIC_OFFLINE_DEMO === "true";
@@ -28,6 +29,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider session={bootstrapSession}>
       <ThemeProvider>
         <OfflineDemoProvider>
+          <AlchemyThemeBridge />
           {!offlineDemo && <ServiceWorkerRegister />}
           <ToastHost />
           <CursorAura />

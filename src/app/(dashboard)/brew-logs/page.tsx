@@ -71,7 +71,7 @@ export default function BrewLogsPage() {
 
   return (
     <div>
-      <DashboardHeader title="Brew History" description="Your logged infusion sessions" />
+      <DashboardHeader label="Journal" title="Brew History" description="Your logged infusion sessions" />
 
       {loading ? (
         <LoadingSpinner />

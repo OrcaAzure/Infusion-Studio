@@ -13,7 +13,11 @@ try {
     }
     if (Test-Path $apiDir) {
         if (Test-Path $apiBak) { Remove-Item $apiBak -Recurse -Force }
-        Rename-Item -Path $apiDir -NewName "_api.offline-bak" -Force
+        try {
+            Rename-Item -Path $apiDir -NewName "_api.offline-bak" -Force
+        } catch {
+            throw "Cannot exclude API routes (is 'npm run dev' running?). Stop the dev server and retry offline QA."
+        }
     }
 
     $env:OFFLINE_BUILD = "true"
@@ -30,6 +34,35 @@ try {
     if (-not (Test-Path (Join-Path $Root "out\index.html"))) {
         throw "Static export failed: out/index.html not found"
     }
+
+  $routes = @(
+        "index.html",
+        "dashboard\index.html",
+        "ingredients\index.html",
+        "blends\index.html",
+        "blends\create\index.html",
+        "timer\index.html",
+        "brew-logs\index.html",
+        "recipes\index.html",
+        "settings\index.html",
+        "blends\item\index.html",
+        "ingredients\item\index.html"
+    )
+    $routeFail = 0
+    foreach ($r in $routes) {
+        $p = Join-Path $Root "out\$r"
+        if (Test-Path $p) {
+            Write-Host "OK   out/$($r -replace '\\','/')" -ForegroundColor Green
+        } else {
+            Write-Host "FAIL out/$($r -replace '\\','/') missing" -ForegroundColor Red
+            $routeFail++
+        }
+    }
+
+    if ($routeFail -gt 0) {
+        throw "Offline static route check failed ($routeFail missing)"
+    }
+
     Write-Host "OFFLINE_STATIC_BUILD_OK" -ForegroundColor Green
 }
 finally {
@@ -42,5 +75,6 @@ finally {
         Rename-Item -Path $middlewareBak -NewName "middleware.ts" -Force
     }
     Remove-Item Env:OFFLINE_BUILD -ErrorAction SilentlyContinue
+    Remove-Item Env:NEXT_PUBLIC_OFFLINE_DEMO -ErrorAction SilentlyContinue
     Pop-Location
 }

@@ -4,7 +4,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FadeIn } from "@/components/ui/motion";
 import {
   LayoutDashboard,
   Leaf,
@@ -203,8 +202,11 @@ export function Sidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed left-4 z-40 lg:hidden"
-        style={{ top: "max(1rem, env(safe-area-inset-top))" }}
+        className={cn(
+          "fixed z-40 lg:hidden",
+          offline ? "left-4" : "left-5 lg:left-[calc(1.25rem+0.5rem)]"
+        )}
+        style={{ top: offline ? "max(1rem, env(safe-area-inset-top))" : "max(1.25rem, calc(env(safe-area-inset-top) + 0.75rem))" }}
         onClick={() => setSidebarOpen(!sidebarOpen)}
         aria-label="Toggle menu"
       >
@@ -226,8 +228,9 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r p-4 backdrop-blur-xl transition-transform duration-200 ease-out",
+          "fixed z-50 flex w-64 flex-col border-r p-4 backdrop-blur-xl transition-transform duration-200 ease-out",
           "alchemy-sidebar border-stone-200/80 bg-white/85 dark:border-stone-700/80 dark:bg-stone-900/85",
+          offline ? "inset-y-0 left-0" : "fluid-sidebar",
           "lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -243,15 +246,18 @@ export function DashboardHeader({
   description,
   action,
   icon: Icon,
+  label,
 }: {
   title: string;
   description?: string;
   action?: React.ReactNode;
   icon?: LucideIcon;
+  /** Small caps label above title (website section style). */
+  label?: string;
 }) {
   return (
-    <FadeIn className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
-      <div className="page-header-pt min-w-0 flex-1">
+    <div className="mb-6 flex min-w-0 flex-col gap-4 sm:mb-8 sm:flex-row sm:items-start sm:justify-between">
+      <div className="lab-page-header min-w-0 flex-1">
         <div className="flex items-start gap-3">
           {Icon && (
             <div className="alchemy-icon-badge mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-white">
@@ -259,6 +265,11 @@ export function DashboardHeader({
             </div>
           )}
           <div className="min-w-0">
+            {label && (
+              <p className="alchemy-label mb-1 text-[10px] font-medium uppercase tracking-widest">
+                {label}
+              </p>
+            )}
             <h1 className="text-xl font-bold text-stone-900 sm:text-2xl dark:text-stone-100">
               {title}
             </h1>
@@ -273,6 +284,6 @@ export function DashboardHeader({
           {action}
         </div>
       )}
-    </FadeIn>
+    </div>
   );
 }

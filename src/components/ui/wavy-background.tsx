@@ -1,7 +1,7 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 import { createNoise3D } from "simplex-noise";
 
 type WavyBackgroundProps = {
@@ -35,11 +35,13 @@ export function WavyBackground({
   waveOpacity = 0.5,
 }: WavyBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -50,9 +52,10 @@ export function WavyBackground({
     let nt = 0;
 
     const resize = () => {
+      const rect = container.getBoundingClientRect();
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      w = window.innerWidth;
-      h = window.innerHeight;
+      w = Math.max(1, Math.floor(rect.width));
+      h = Math.max(1, Math.floor(rect.height));
       canvas.width = Math.floor(w * dpr);
       canvas.height = Math.floor(h * dpr);
       canvas.style.width = `${w}px`;
@@ -87,8 +90,11 @@ export function WavyBackground({
     resize();
     render();
 
+    const ro = new ResizeObserver(() => resize());
+    ro.observe(container);
     window.addEventListener("resize", resize);
     return () => {
+      ro.disconnect();
       window.removeEventListener("resize", resize);
       cancelAnimationFrame(animationRef.current);
     };
@@ -96,6 +102,7 @@ export function WavyBackground({
 
   return (
     <div
+      ref={containerRef}
       className={cn(
         "relative flex min-h-screen flex-col items-center justify-center overflow-hidden",
         containerClassName

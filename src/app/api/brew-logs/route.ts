@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/get-session-user";
 import { prisma } from "@/lib/prisma";
 import { brewLogSchema } from "@/lib/validations/brew-log";
+import { calcStreak } from "@/lib/brew-streak";
 
 export async function GET(request: NextRequest) {
   const user = await getSessionUser();
@@ -62,7 +63,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid brew log" }, { status: 400 });
     }
 
-    const { blendId, recipeId, notes, brewedAt } = parsed.data;
+    const { blendId, recipeId, notes, rating, brewedAt } = parsed.data;
 
     const blend = await prisma.blend.findFirst({
       where: { id: blendId, userId: user.id },
@@ -87,6 +88,7 @@ export async function POST(request: Request) {
           blendId,
           recipeId: recipeId ?? null,
           notes: notes ?? null,
+          rating: rating ?? null,
           brewedAt: brewedAt ?? new Date(),
         },
         include: {
@@ -108,7 +110,17 @@ export async function POST(request: Request) {
       return created;
     });
 
-    return NextResponse.json(log, { status: 201 });
+    const recentLogs = await prisma.brewLog.findMany({
+      where: { userId: user.id },
+      orderBy: { brewedAt: "desc" },
+      take: 60,
+      select: { brewedAt: true },
+    });
+
+    return NextResponse.json(
+      { ...log, streak: calcStreak(recentLogs) },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("[API brew-logs POST]", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

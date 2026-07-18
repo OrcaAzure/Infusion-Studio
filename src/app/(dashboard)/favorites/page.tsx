@@ -44,6 +44,7 @@ export default function FavoritesPage() {
   return (
     <div>
       <DashboardHeader
+        label="Collection"
         title="Favorite Blends"
         description="Your go-to infusion blends"
       />

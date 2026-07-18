@@ -16,6 +16,8 @@
     "qa:start": "npm run build && cross-env ALLOW_LOCAL_PREVIEW=true next start",
     "qa:web": "powershell -ExecutionPolicy Bypass -File scripts/qa-web.ps1",
     "qa:offline": "powershell -ExecutionPolicy Bypass -File scripts/qa-offline-static.ps1",
+    "qa:all": "npm run qa:web && npm run qa:offline",
+    "test:api": "node scripts/api-smoke.mjs",
     "android:init": "npx cap add android",
     "android:sync": "npx cap sync android",
     "android:open": "npx cap open android",

@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 
 export const SNAPPY_EASE = [0.25, 0.1, 0.25, 1] as const;
@@ -36,25 +35,9 @@ export function FadeIn({ children, delay = 0, className }: FadeInProps) {
   );
 }
 
-/** Fast enter on tab change — no exit wait, navigation stays instant. */
+/** Fast enter on tab change — CSS only, no remount key (keeps navigation snappy). */
 export function PageTransition({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const reduce = useReducedMotion();
-
-  if (reduce) {
-    return <>{children}</>;
-  }
-
-  return (
-    <motion.div
-      key={pathname}
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2, ease: SNAPPY_EASE }}
-    >
-      {children}
-    </motion.div>
-  );
+  return <div className="page-content-enter">{children}</div>;
 }
 
 export function StaggerContainer({ children, className }: { children: React.ReactNode; className?: string }) {

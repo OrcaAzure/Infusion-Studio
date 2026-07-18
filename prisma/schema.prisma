@@ -98,21 +98,27 @@ model Ingredient {
 }
 
 model Blend {
-  id          String            @id @default(cuid())
-  name        String
-  description String?
-  brewTemp    Int?
-  brewTime    Int?
-  userId      String
-  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  ingredients BlendIngredient[]
-  recipes     Recipe[]
-  favorites   FavoriteBlend[]
-  brewLogs    BrewLog[]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  id            String            @id @default(cuid())
+  name          String
+  description   String?
+  brewTemp      Int?
+  brewTime      Int?
+  version       Int               @default(1)
+  versionNotes  String?
+  parentBlendId String?
+  parentBlend   Blend?            @relation("BlendLineage", fields: [parentBlendId], references: [id], onDelete: SetNull)
+  childVersions Blend[]           @relation("BlendLineage")
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ingredients   BlendIngredient[]
+  recipes       Recipe[]
+  favorites     FavoriteBlend[]
+  brewLogs      BrewLog[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@index([userId])
+  @@index([parentBlendId])
 }
 
 model BlendIngredient {
@@ -168,6 +174,7 @@ model FavoriteBlend {
 model BrewLog {
   id        String   @id @default(cuid())
   notes     String?
+  rating    Int?
   brewedAt  DateTime @default(now())
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)

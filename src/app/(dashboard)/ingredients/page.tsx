@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { LoadingSpinner, EmptyState } from "@/components/ui/empty-state";
 import type { IngredientWithMeta } from "@/types";
 import { isOfflineDemo } from "@/lib/offline-demo/api";
+import { cacheGet, cacheSet } from "@/lib/client-cache";
 
 function IngredientsContent() {
   const { status } = useSession();
@@ -23,7 +24,15 @@ function IngredientsContent() {
 
   const fetchIngredients = useCallback(
     async (filters: { search: string; category: string; sortBy: string; sortOrder: string }) => {
-      setLoading(true);
+      const cacheKey = `ingredients:${filters.search}:${filters.category}:${filters.sortBy}:${filters.sortOrder}`;
+      const cached = cacheGet<IngredientWithMeta[]>(cacheKey);
+      if (cached) {
+        setIngredients(cached);
+        setLoading(false);
+      } else {
+        setLoading(true);
+      }
+
       const params = new URLSearchParams();
       if (filters.search) params.set("search", filters.search);
       if (filters.category) params.set("category", filters.category);
@@ -32,6 +41,7 @@ function IngredientsContent() {
 
       const res = await fetch(`/api/ingredients?${params}`);
       const data = await res.json();
+      cacheSet(cacheKey, data);
       setIngredients(data);
       setLoading(false);
     },
@@ -54,7 +64,7 @@ function IngredientsContent() {
         <SearchFilters initialCategory={initialCategory} onFilterChange={fetchIngredients} />
       </div>
 
-      {loading ? (
+      {loading && ingredients.length === 0 ? (
         <LoadingSpinner />
       ) : ingredients.length === 0 ? (
         <EmptyState
@@ -84,6 +94,7 @@ export default function IngredientsPage() {
   return (
     <div>
       <DashboardHeader
+        label="Apothecary"
         title="Ingredient Inventory"
         description="Manage your teas, herbs, spices, and more"
         action={

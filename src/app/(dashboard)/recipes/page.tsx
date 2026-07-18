@@ -100,6 +100,7 @@ export default function RecipesPage() {
   return (
     <div>
       <DashboardHeader
+        label="Rituals"
         title="Saved Recipes"
         description="Your documented brewing rituals"
         action={
