@@ -3,14 +3,14 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { appPath } from "@/lib/app-path";
-import { isOfflineDemo } from "@/lib/offline-demo/api";
+import { isOfflineApk } from "@/lib/offline-demo/api";
 
 /** Android hardware back: navigate in-app instead of exiting. */
 export function AndroidBackButton() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!isOfflineDemo()) return;
+    if (!isOfflineApk()) return;
 
     let remove: (() => void) | undefined;
 

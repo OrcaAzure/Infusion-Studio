@@ -22,6 +22,7 @@ try {
 
     $env:OFFLINE_BUILD = "true"
     $env:NEXT_PUBLIC_OFFLINE_DEMO = "true"
+    $env:NEXT_PUBLIC_OFFLINE_APK = "true"
     $env:CAPACITOR_SERVER_URL = ""
 
     if (Test-Path (Join-Path $Root ".next")) {

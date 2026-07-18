@@ -1,10 +1,10 @@
-import { isOfflineDemo } from "./api";
+import { isOfflineApk } from "./api";
 
 const STORAGE_KEY = "infusion-studio-offline-demo";
 
 export async function demoStorageGet(): Promise<string | null> {
   if (typeof window === "undefined") return null;
-  if (isOfflineDemo()) {
+  if (isOfflineApk()) {
     try {
       const { Preferences } = await import("@capacitor/preferences");
       const { value } = await Preferences.get({ key: STORAGE_KEY });
@@ -18,7 +18,7 @@ export async function demoStorageGet(): Promise<string | null> {
 
 export async function demoStorageSet(value: string): Promise<void> {
   if (typeof window === "undefined") return;
-  if (isOfflineDemo()) {
+  if (isOfflineApk()) {
     try {
       const { Preferences } = await import("@capacitor/preferences");
       await Preferences.set({ key: STORAGE_KEY, value });
@@ -36,7 +36,7 @@ export async function demoStorageSet(value: string): Promise<void> {
 
 export async function demoStorageRemove(): Promise<void> {
   if (typeof window === "undefined") return;
-  if (isOfflineDemo()) {
+  if (isOfflineApk()) {
     try {
       const { Preferences } = await import("@capacitor/preferences");
       await Preferences.remove({ key: STORAGE_KEY });

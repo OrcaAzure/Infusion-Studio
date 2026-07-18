@@ -2,11 +2,11 @@
 
 import { BrewAmbience } from "@/components/ui/brew-ambience";
 import { LightRays } from "@/registry/magicui/light-rays";
-import { isOfflineDemo } from "@/lib/offline-demo/api";
+import { isOfflineApk } from "@/lib/offline-demo/api";
 
 /** Brewing atmosphere — alchemy gold-green on web, standard emerald on offline APK. */
 export function SceneBackground() {
-  const alchemy = !isOfflineDemo();
+  const alchemy = !isOfflineApk();
 
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden>

@@ -205,6 +205,12 @@ export async function handleOfflineRequest(
   return json({ error: "Offline demo: route not mocked" }, 404);
 }
 
+/** True only for the offline Android APK — web keeps the full lab UI. */
+export function isOfflineApk() {
+  return process.env.NEXT_PUBLIC_OFFLINE_APK === "true";
+}
+
+/** Client-side API mock (APK static export). */
 export function isOfflineDemo() {
   return process.env.NEXT_PUBLIC_OFFLINE_DEMO === "true";
 }

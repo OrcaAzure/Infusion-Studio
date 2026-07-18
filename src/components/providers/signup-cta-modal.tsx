@@ -2,7 +2,7 @@
 
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { isOfflineDemo } from "@/lib/offline-demo/api";
+import { isOfflineApk } from "@/lib/offline-demo/api";
 
 const SIGNUP_URL = process.env.NEXT_PUBLIC_SIGNUP_URL ?? "https://infusion-studio.app/register";
 
@@ -12,7 +12,7 @@ interface SignupCtaModalProps {
 }
 
 export function SignupCtaModal({ isOpen, onClose }: SignupCtaModalProps) {
-  if (!isOfflineDemo()) return null;
+  if (!isOfflineApk()) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Save your blends forever">

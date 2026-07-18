@@ -10,7 +10,7 @@ import { ConfirmModal } from "@/components/ui/confirm-modal";
 import { LoadingSpinner } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { usePreferencesStore } from "@/stores";
-import { isOfflineDemo } from "@/lib/offline-demo/api";
+import { isOfflineApk } from "@/lib/offline-demo/api";
 import { resetDemoState } from "@/lib/offline-demo/store";
 
 type SettingsForm = {
@@ -20,7 +20,7 @@ type SettingsForm = {
 
 export default function SettingsPage() {
   const toast = useToast((s) => s.show);
-  const offline = isOfflineDemo();
+  const offline = isOfflineApk();
   const alchemyOnApk = usePreferencesStore((s) => s.alchemyOnApk);
   const setAlchemyOnApk = usePreferencesStore((s) => s.setAlchemyOnApk);
   const [loading, setLoading] = useState(true);

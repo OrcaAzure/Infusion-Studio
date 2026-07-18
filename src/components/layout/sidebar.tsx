@@ -26,7 +26,7 @@ import { useUIStore } from "@/stores";
 import { ThemeToggle } from "./theme-toggle";
 import { Button } from "@/components/ui/button";
 import { AppLink } from "@/components/ui/app-link";
-import { isOfflineDemo } from "@/lib/offline-demo/api";
+import { isOfflineApk } from "@/lib/offline-demo/api";
 
 const mainNavItems: { href: string; label: string; icon: LucideIcon; tourId?: string }[] = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -105,7 +105,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { sidebarOpen, setSidebarOpen } = useUIStore();
-  const offline = isOfflineDemo();
+  const offline = isOfflineApk();
   const current = normalizePath(pathname);
 
   const closeSidebar = () => setSidebarOpen(false);
@@ -131,7 +131,7 @@ export function Sidebar() {
 
   const NavContent = () => (
     <>
-      <div className="mb-8 flex items-center gap-3 px-2 pt-[env(safe-area-inset-top)] lg:pt-0">
+      <div className="mb-6 flex shrink-0 items-center gap-3 px-2 pt-[env(safe-area-inset-top)] lg:pt-0">
         <Image
           src="/icons/icon-192.png"
           width={40}
@@ -145,26 +145,28 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1">{renderNav(mainNavItems)}</nav>
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <nav className="space-y-1">{renderNav(mainNavItems)}</nav>
 
-      <nav className="mt-4 space-y-1 border-t border-stone-200 pt-4 dark:border-stone-700">
-        {promoNavItems.map(({ href, label, icon }) => {
-          const target = normalizePath(href);
-          const isActive = current === target || current.startsWith(target + "/");
-          return (
-            <NavLink
-              key={href}
-              href={href}
-              label={label}
-              icon={icon}
-              isActive={isActive}
-              onNavigate={closeSidebar}
-            />
-          );
-        })}
-      </nav>
+        <nav className="mt-4 space-y-1 border-t border-stone-200 pt-4 dark:border-stone-700">
+          {promoNavItems.map(({ href, label, icon }) => {
+            const target = normalizePath(href);
+            const isActive = current === target || current.startsWith(target + "/");
+            return (
+              <NavLink
+                key={href}
+                href={href}
+                label={label}
+                icon={icon}
+                isActive={isActive}
+                onNavigate={closeSidebar}
+              />
+            );
+          })}
+        </nav>
+      </div>
 
-      <div className="mt-auto space-y-4 border-t border-stone-200 pt-4 dark:border-stone-700">
+      <div className="mt-3 shrink-0 space-y-4 border-t border-stone-200 pt-4 dark:border-stone-700">
         <ThemeToggle className="w-full justify-center" />
         <AppLink href="/settings" onClick={closeSidebar}>
           <Button
@@ -228,14 +230,16 @@ export function Sidebar() {
 
       <aside
         className={cn(
-          "fixed z-50 flex w-64 flex-col border-r p-4 backdrop-blur-xl transition-transform duration-200 ease-out",
+          "fixed z-50 flex w-64 flex-col overflow-hidden border-r p-4 backdrop-blur-xl transition-transform duration-200 ease-out",
           "alchemy-sidebar border-stone-200/80 bg-white/85 dark:border-stone-700/80 dark:bg-stone-900/85",
           offline ? "inset-y-0 left-0" : "fluid-sidebar",
           "lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <NavContent />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <NavContent />
+        </div>
       </aside>
     </>
   );

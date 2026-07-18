@@ -24,5 +24,5 @@ export const ALCHEMY_WAVE_COLORS = [
 ];
 
 export function isAlchemyWeb() {
-  return process.env.NEXT_PUBLIC_OFFLINE_DEMO !== "true";
+  return process.env.NEXT_PUBLIC_OFFLINE_APK !== "true";
 }

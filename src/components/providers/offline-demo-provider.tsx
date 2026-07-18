@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { isOfflineDemo } from "@/lib/offline-demo/api";
+import { isOfflineApk } from "@/lib/offline-demo/api";
 import { initDemoState } from "@/lib/offline-demo/store";
 import { appPath } from "@/lib/app-path";
 import { LoadingSpinner } from "@/components/ui/empty-state";
@@ -27,11 +27,11 @@ function normalizePath(pathname: string) {
 export function OfflineDemoProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [ready, setReady] = useState(!isOfflineDemo());
+  const [ready, setReady] = useState(!isOfflineApk());
   const [bannerVisible, setBannerVisible] = useState(false);
 
   useEffect(() => {
-    if (!isOfflineDemo()) return;
+    if (!isOfflineApk()) return;
     void initDemoState().then(() => setReady(true));
   }, []);
 
@@ -46,7 +46,7 @@ export function OfflineDemoProvider({ children }: { children: React.ReactNode })
   }, [ready]);
 
   useLayoutEffect(() => {
-    if (!isOfflineDemo()) return;
+    if (!isOfflineApk()) return;
     const path = normalizePath(pathname);
     if (AUTH_PATHS.has(path)) {
       router.replace(appPath("/"));
@@ -54,7 +54,7 @@ export function OfflineDemoProvider({ children }: { children: React.ReactNode })
   }, [pathname, router]);
 
   useLayoutEffect(() => {
-    if (!isOfflineDemo() || !ready) return;
+    if (!isOfflineApk() || !ready) return;
     const path = normalizePath(pathname);
     if (path === "/") return;
     setBannerVisible(true);
@@ -62,7 +62,7 @@ export function OfflineDemoProvider({ children }: { children: React.ReactNode })
     return () => clearTimeout(hide);
   }, [pathname, ready]);
 
-  if (!isOfflineDemo()) return children;
+  if (!isOfflineApk()) return children;
 
   return (
     <>

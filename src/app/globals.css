@@ -477,6 +477,7 @@ body {
   bottom: max(0.625rem, env(safe-area-inset-bottom));
   left: 0.625rem;
   height: auto;
+  max-height: calc(100dvh - 1.25rem);
   border-radius: 1.5rem;
   border: 1px solid color-mix(in srgb, var(--alchemy-gold) 18%, var(--border));
   border-right: 1px solid color-mix(in srgb, var(--alchemy-gold) 18%, var(--border));
@@ -490,6 +491,7 @@ body {
     top: max(1.25rem, env(safe-area-inset-top));
     bottom: max(1.25rem, env(safe-area-inset-bottom));
     left: 1.25rem;
+    max-height: calc(100dvh - 2.5rem);
     border-radius: 1.75rem;
   }
 }

@@ -7,10 +7,10 @@ import { FluidCanvas, FluidStage } from "@/components/layout/fluid-stage";
 import { SceneBackground } from "@/components/ui/scene-background";
 import { PageTransition } from "@/components/ui/motion";
 import { OnboardingTour } from "@/components/providers/onboarding-tour";
-import { isOfflineDemo } from "@/lib/offline-demo/api";
+import { isOfflineApk } from "@/lib/offline-demo/api";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-  const offline = isOfflineDemo();
+  const offline = isOfflineApk();
 
   if (offline) {
     return (

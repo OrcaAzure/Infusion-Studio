@@ -8,6 +8,7 @@ import {
   Droplets,
   Timer,
   Home,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 import { AppLink } from "@/components/ui/app-link";
@@ -75,6 +76,13 @@ export function LabTopBar() {
       </nav>
 
       <div className="flex shrink-0 items-center gap-2">
+        <AppLink
+          href="/settings"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100 md:hidden"
+          aria-label="Settings"
+        >
+          <Settings className="h-4 w-4" />
+        </AppLink>
         <AppLink
           href="/"
           className="hidden items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-stone-500 transition-colors hover:text-stone-800 sm:flex dark:text-stone-400 dark:hover:text-stone-100"

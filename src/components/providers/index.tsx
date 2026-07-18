@@ -10,7 +10,7 @@ import { OfflineDemoProvider } from "./offline-demo-provider";
 import { AlchemyThemeBridge } from "./alchemy-theme-bridge";
 import { ToastHost } from "@/components/ui/toast";
 
-const offlineDemo = process.env.NEXT_PUBLIC_OFFLINE_DEMO === "true";
+const offlineApk = process.env.NEXT_PUBLIC_OFFLINE_APK === "true";
 const skipAuth = process.env.NEXT_PUBLIC_SKIP_AUTH === "true";
 
 const trialSession = {
@@ -23,18 +23,18 @@ const trialSession = {
 };
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const bootstrapSession = offlineDemo || skipAuth ? trialSession : undefined;
+  const bootstrapSession = offlineApk || skipAuth ? trialSession : undefined;
 
   return (
     <SessionProvider session={bootstrapSession}>
       <ThemeProvider>
         <OfflineDemoProvider>
           <AlchemyThemeBridge />
-          {!offlineDemo && <ServiceWorkerRegister />}
+          {!offlineApk && <ServiceWorkerRegister />}
           <ToastHost />
           <CursorAura />
           {children}
-          {!offlineDemo && <InstallPrompt />}
+          {!offlineApk && <InstallPrompt />}
         </OfflineDemoProvider>
       </ThemeProvider>
     </SessionProvider>
