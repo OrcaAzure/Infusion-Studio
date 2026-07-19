@@ -163,7 +163,7 @@ interface PreferencesState {
 export const usePreferencesStore = create<PreferencesState>()(
   persist(
     (set) => ({
-      alchemyOnApk: false,
+      alchemyOnApk: true,
       setAlchemyOnApk: (alchemyOnApk) => set({ alchemyOnApk }),
     }),
     { name: "infusion-preferences" }

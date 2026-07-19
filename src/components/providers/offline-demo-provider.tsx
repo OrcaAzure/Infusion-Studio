@@ -67,7 +67,7 @@ export function OfflineDemoProvider({ children }: { children: React.ReactNode })
   return (
     <>
       <AndroidBackButton />
-      <div className="pb-[calc(env(safe-area-inset-bottom,0px)+1rem)]">{children}</div>
+      <div>{children}</div>
       {!ready && (
         <div className="fixed inset-0 z-[300] flex flex-col items-center justify-center bg-stone-950/70">
           <LoadingSpinner />
@@ -75,10 +75,9 @@ export function OfflineDemoProvider({ children }: { children: React.ReactNode })
         </div>
       )}
       <div
-        className={`pointer-events-none fixed left-1/2 z-[100] -translate-x-1/2 rounded-full bg-emerald-600/90 px-3 py-1.5 text-center text-[11px] font-medium text-white shadow-lg backdrop-blur-sm transition-opacity duration-500 ${
+        className={`pointer-events-none fixed left-1/2 z-[100] -translate-x-1/2 rounded-full bg-emerald-600/90 px-3 py-1.5 text-center text-[11px] font-medium text-white shadow-lg backdrop-blur-sm transition-opacity duration-500 bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:bottom-3 ${
           bannerVisible ? "opacity-100" : "opacity-0"
         }`}
-        style={{ bottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
         Offline demo — no internet needed
       </div>

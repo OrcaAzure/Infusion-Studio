@@ -13,8 +13,6 @@ import {
   Timer,
   Clock,
   LogOut,
-  Menu,
-  X,
   Droplets,
   Instagram,
   Smartphone,
@@ -149,7 +147,10 @@ export function Sidebar() {
         <nav className="space-y-1">{renderNav(mainNavItems)}</nav>
 
         <nav className="mt-4 space-y-1 border-t border-stone-200 pt-4 dark:border-stone-700">
-          {promoNavItems.map(({ href, label, icon }) => {
+          {(offline
+            ? promoNavItems.filter((item) => item.href !== "/qa")
+            : promoNavItems
+          ).map(({ href, label, icon }) => {
             const target = normalizePath(href);
             const isActive = current === target || current.startsWith(target + "/");
             return (
@@ -201,20 +202,6 @@ export function Sidebar() {
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="icon"
-        className={cn(
-          "fixed z-40 lg:hidden",
-          offline ? "left-4" : "left-5 lg:left-[calc(1.25rem+0.5rem)]"
-        )}
-        style={{ top: offline ? "max(1rem, env(safe-area-inset-top))" : "max(1.25rem, calc(env(safe-area-inset-top) + 0.75rem))" }}
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        aria-label="Toggle menu"
-      >
-        {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </Button>
-
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div

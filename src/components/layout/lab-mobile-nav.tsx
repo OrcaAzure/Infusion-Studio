@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const tabs: { href: string; label: string; icon: LucideIcon }[] = [
   { href: "/dashboard", label: "Home", icon: LayoutDashboard },
-  { href: "/ingredients", label: "Stock", icon: Leaf },
+  { href: "/ingredients", label: "Ingredients", icon: Leaf },
   { href: "/blends", label: "Blends", icon: Droplets },
   { href: "/timer", label: "Timer", icon: Timer },
 ];

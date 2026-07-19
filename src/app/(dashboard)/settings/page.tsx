@@ -97,6 +97,7 @@ export default function SettingsPage() {
       </form>
 
       <div className="mx-auto mt-8 max-w-md space-y-4">
+        {!offline && (
         <div className="rounded-xl border border-stone-200 p-4 dark:border-stone-700">
           <h2 className="mb-1 text-sm font-semibold text-stone-800 dark:text-stone-200">
             Data backup
@@ -112,6 +113,7 @@ export default function SettingsPage() {
             Export backup
           </a>
         </div>
+        )}
 
         {offline && (
           <div className="rounded-xl border border-stone-200 p-4 dark:border-stone-700">

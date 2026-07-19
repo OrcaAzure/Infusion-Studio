@@ -63,17 +63,17 @@ export default function BlendsPage() {
         }
       />
 
-      <div className="mb-6 flex gap-2">
+      <div className="mb-6 flex flex-col gap-2 sm:flex-row">
         <Input
           placeholder="Search blends..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1"
+          className="w-full flex-1"
         />
         <Select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          className="w-40 shrink-0"
+          className="w-full shrink-0 sm:w-40"
           options={[
             { value: "updatedAt", label: "Newest" },
             { value: "name", label: "A–Z" },

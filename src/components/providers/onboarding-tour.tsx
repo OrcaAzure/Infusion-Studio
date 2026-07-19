@@ -85,8 +85,7 @@ export function OnboardingTour() {
 
   return (
     <div
-      className="absolute inset-0 z-[200] flex flex-col justify-end bg-black/50 p-4"
-      style={{ minHeight: "100dvh" }}
+      className="fixed inset-0 z-[250] flex flex-col justify-end bg-black/50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="onboarding-title"
