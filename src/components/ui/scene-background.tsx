@@ -1,7 +1,7 @@
 "use client";
 
 import { BrewAmbience } from "@/components/ui/brew-ambience";
-import { LightRays } from "@/registry/magicui/light-rays";
+import { LightRays } from "@/components/ui/light-rays";
 import { isOfflineApk } from "@/lib/offline-demo/api";
 
 /** Brewing atmosphere — alchemy gold-green on web, standard emerald on offline APK. */

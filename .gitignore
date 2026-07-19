@@ -46,8 +46,16 @@ android/app/build/
 android/build/
 android/local.properties
 
-# QA release APKs (keep latest — remove line to commit APK)
-# releases/
+# Release APKs (build locally; not committed)
+releases/*
+!releases/.gitkeep
+
+# Temp / agent artifacts
+.tmp-v4-docx/
+tmp-docx-extract/
+tmp-docx.zip
+tmp-docx-text.txt
+.tmp-v4-docx.zip
 
 # vercel
 .vercel

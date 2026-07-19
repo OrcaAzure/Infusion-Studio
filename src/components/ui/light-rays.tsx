@@ -76,7 +76,7 @@ function Ray({ left, rotate, width, swing, delay, duration, intensity }: LightRa
   );
 }
 
-/** Magic UI–style volumetric light rays shining from above */
+/** Volumetric light rays shining from above */
 export function LightRays({
   className,
   style,
@@ -90,7 +90,6 @@ export function LightRays({
   const [rays, setRays] = useState<LightRay[]>([]);
   const cycleDuration = Math.max(speed, 0.1);
 
-  // Client-only ray generation avoids hydration mismatch from Math.random()
   useEffect(() => {
     setRays(createRays(count, cycleDuration));
   }, [count, cycleDuration]);

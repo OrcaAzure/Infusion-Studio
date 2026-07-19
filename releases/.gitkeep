@@ -1,0 +1,2 @@
+# APK builds are written here by `npm run android:build` / `android:build:offline`.
+# This folder is gitignored — build locally.
