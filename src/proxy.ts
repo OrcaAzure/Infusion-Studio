@@ -1,13 +1,18 @@
+import type { NextRequest } from "next/server";
 import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth.config";
 import { getAuthSecret } from "@/lib/auth-secret";
 
-/** Edge-safe proxy — JWT checks only, no Prisma. */
-export const { auth: proxy } = NextAuth({
+const { auth } = NextAuth({
   secret: getAuthSecret(),
   trustHost: true,
   ...authConfig,
 });
+
+/** Next.js 16 requires a function named `proxy` (formerly middleware). */
+export function proxy(request: NextRequest) {
+  return auth(request);
+}
 
 export const config = {
   matcher: [
