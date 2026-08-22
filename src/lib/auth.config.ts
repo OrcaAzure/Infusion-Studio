@@ -1,26 +1,15 @@
 import type { NextAuthConfig } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
-import { loginSchema } from "@/lib/validations/auth";
 
-if (
-  process.env.SKIP_AUTH === "true" &&
-  process.env.NODE_ENV === "production" &&
-  process.env.NEXT_PHASE !== "phase-production-build" &&
-  process.env.ALLOW_LOCAL_PREVIEW !== "true"
-) {
-  throw new Error("SKIP_AUTH must not be set in production");
-}
-
+/** Edge-safe config for the Next.js proxy. Keep Prisma/bcrypt out of this file. */
 export const authConfig: NextAuthConfig = {
   pages: {
     signIn: "/login",
     newUser: "/register",
+    error: "/login",
   },
+  providers: [],
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
-      // Local preview: skip login, browse all pages as trial user
       if (process.env.SKIP_AUTH === "true") return true;
 
       const isLoggedIn = !!auth?.user;
@@ -52,27 +41,5 @@ export const authConfig: NextAuthConfig = {
       return session;
     },
   },
-  providers: [
-    Credentials({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-      async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials);
-        if (!parsed.success) return null;
-
-        const { email, password } = parsed.data;
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user?.password) return null;
-
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) return null;
-
-        return { id: user.id, email: user.email, name: user.name, image: user.image };
-      },
-    }),
-  ],
   session: { strategy: "jwt" },
 };

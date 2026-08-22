@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_SKIP_AUTH: process.env.SKIP_AUTH,
   },
+  outputFileTracingIncludes: {
+    "/api/**": ["./prisma/dev.db", "./prisma/schema.prisma"],
+    "/*": ["./prisma/dev.db"],
+  },
   turbopack: {
     resolveAlias: isOfflineBuild
       ? {}
